@@ -40,6 +40,7 @@
 #import "BITHockeyAppClient.h"
 
 #import "BITCrashAttachment.h"
+#import "BITCrashReportComposeViewController.h"
 #import "BITHockeyBaseManagerPrivate.h"
 #import "BITCrashManagerPrivate.h"
 #import "BITCrashReportTextFormatter.h"
@@ -970,20 +971,34 @@ static PLCrashReporterCallbacks plCrashCallbacks = {
         alertDescription = [NSString stringWithFormat:BITHockeyLocalizedString(@"CrashDataFoundDescription"), appName];
       }
       
-      if (_alertViewHandler) {
-        _alertViewHandler();
-      } else {
-        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:[NSString stringWithFormat:BITHockeyLocalizedString(@"CrashDataFoundTitle"), appName]
-                                                            message:alertDescription
-                                                           delegate:self
-                                                  cancelButtonTitle:BITHockeyLocalizedString(@"CrashDontSendReport")
-                                                  otherButtonTitles:BITHockeyLocalizedString(@"CrashSendReport"), nil];
-        
-        if (self.shouldShowAlwaysButton) {
-          [alertView addButtonWithTitle:BITHockeyLocalizedString(@"CrashSendReportAlways")];
+      switch (self.reportMode) {
+        case BITCrashManagerReportModeCustomAlertView:
+          if (_alertViewHandler)
+            _alertViewHandler();
+          break;
+          
+        case BITCrashManagerReportModeDefault: {
+          UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:[NSString stringWithFormat:BITHockeyLocalizedString(@"CrashDataFoundTitle"), appName]
+                                                              message:alertDescription
+                                                             delegate:self
+                                                    cancelButtonTitle:BITHockeyLocalizedString(@"CrashDontSendReport")
+                                                    otherButtonTitles:BITHockeyLocalizedString(@"CrashSendReport"), nil];
+          
+          if (self.shouldShowAlwaysButton) {
+            [alertView addButtonWithTitle:BITHockeyLocalizedString(@"CrashSendReportAlways")];
+          }
+          
+          [alertView show];
+          break;
         }
-        
-        [alertView show];
+          
+        case BITCrashManagerReportModeComposeView: {
+          BITCrashReportComposeViewController *composeViewController = [BITCrashReportComposeViewController new];
+          composeViewController.delegate = self;
+          [composeViewController prepareWithUserName:username userEmail:useremail];
+          [self showView: composeViewController];
+          break;
+        }
       }
     } else {
       [self sendNextCrashReport];
@@ -1377,6 +1392,22 @@ static PLCrashReporterCallbacks plCrashCallbacks = {
 }
 
 
+#pragma mark - Crash Report Compose View Controller Delegate
+
+- (void)crashReportComposeViewController:(BITCrashReportComposeViewController *)composeViewController didComposeWithMetaData:(BITCrashMetaData *)metaData
+{
+    // Save name and e-mail
+    BITHockeyManager.sharedHockeyManager.userName = metaData.userName;
+    BITHockeyManager.sharedHockeyManager.userEmail = metaData.userEmail;
+  
+    [self handleUserInput:BITCrashManagerUserInputSend withUserProvidedMetaData:metaData];
+    [composeViewController dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)crashReportComposeViewControllerDidCancel:(BITCrashReportComposeViewController *)composeViewController
+{
+  [composeViewController dismissViewControllerAnimated:YES completion:nil];
+}
 
 
 #pragma mark - Networking

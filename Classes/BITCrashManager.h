@@ -108,6 +108,26 @@ typedef NS_ENUM(NSUInteger, BITCrashManagerUserInput) {
   
 };
 
+/**
+ The report mode to use for creating crash reports
+ */
+typedef NS_ENUM(NSUInteger, BITCrashManagerReportMode) {
+  /**
+   * User is presented alert view with options to send / not send / always send
+   */
+  BITCrashManagerReportModeDefault = 0,
+  
+  /**
+   * User is presented custom alert view set via `-setAlertViewHandler:`
+   */
+  BITCrashManagerReportModeCustomAlertView = 1,
+  
+  /**
+   * User is presented modal compose view allowing him to enter user name, e-mail and a problem description
+   */
+  BITCrashManagerReportModeComposeView = 2
+};
+
 
 @protocol BITCrashManagerDelegate;
 
@@ -334,6 +354,11 @@ typedef NS_ENUM(NSUInteger, BITCrashManagerUserInput) {
  @see BITCrashMetaData
  */
 - (BOOL)handleUserInput:(BITCrashManagerUserInput)userInput withUserProvidedMetaData:(BITCrashMetaData *)userProvidedMetaData;
+
+/**
+ The report mode to use for creating crash reports
+ */
+@property(nonatomic) BITCrashManagerReportMode reportMode;
 
 /**
  Lets you set a custom block which handles showing a custom UI and asking the user

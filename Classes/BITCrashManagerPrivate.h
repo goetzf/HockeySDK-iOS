@@ -33,10 +33,12 @@
 
 #import <CrashReporter/CrashReporter.h>
 
+#import "BITCrashReportComposeViewControllerDelegate.h"
+
+
 @class BITHockeyAppClient;
 
-@interface BITCrashManager () {
-}
+@interface BITCrashManager () <BITCrashReportComposeViewControllerDelegate>
 
 
 ///-----------------------------------------------------------------------------
