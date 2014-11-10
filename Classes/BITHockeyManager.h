@@ -480,6 +480,17 @@
 @property (nonatomic, retain) NSString *userEmail;
 
 
+/** Set the company name that should be used in the SDK components
+ 
+ Right now this is used by `BITCrashReportComposeViewController` in the description
+ label at the top of the view.
+ 
+ The value can be set at any time and will be stored in the keychain on the current
+ device only! To delete the value from the keychain set the value to `nil`.
+ */
+@property (nonatomic, retain) NSString *companyName;
+
+
 ///-----------------------------------------------------------------------------
 /// @name SDK meta data
 ///-----------------------------------------------------------------------------

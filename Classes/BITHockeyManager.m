@@ -431,6 +431,13 @@ bitstadium_info_t bitstadium_library_info __attribute__((section("__TEXT,__bit_h
   [self modifyKeychainUserValue:userEmail forKey:kBITHockeyMetaUserEmail];
 }
 
+- (void)setCompanyName:(NSString *)companyName {
+  // always set it, since nil value will trigger removal of the keychain entry
+  _companyName = companyName;
+  
+  [self modifyKeychainUserValue:companyName forKey:kBITHockeyMetaCompanyName];
+}
+
 - (void)testIdentifier {
   if (!_appIdentifier || [self isAppStoreEnvironment]) {
     return;
