@@ -54,6 +54,13 @@
     self.headerLabel.text = [NSString stringWithFormat:BITHockeyLocalizedString(@"HockeyCrashReportShortDescription"), appName];
   
   [self setUpUserFields];
+  
+  if (self.nameTextField.text.length == 0)
+    [self.nameTextField becomeFirstResponder];
+  else if (self.emailTextField.text.length == 0)
+    [self.emailTextField becomeFirstResponder];
+  else
+    [self.problemDescriptionTextView becomeFirstResponder];
 }
 
 - (void)prepareWithUserName:(NSString *)userName userEmail:(NSString *)userEmail
@@ -85,9 +92,20 @@
   [self.delegate crashReportComposeViewController:self didComposeWithMetaData:metaData];
 }
 
-
 - (IBAction)dismissReport:(id)sender {
   [self.delegate crashReportComposeViewControllerDidCancel:self];
+}
+
+
+#pragma mark - Text Field Delegate
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField {
+  if (textField == self.nameTextField)
+    [self.emailTextField becomeFirstResponder];
+  else if (textField == self.emailTextField)
+    [self.problemDescriptionTextView becomeFirstResponder];
+
+  return NO;
 }
 
 
