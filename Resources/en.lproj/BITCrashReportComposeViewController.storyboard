@@ -51,7 +51,9 @@
                                             <constraints>
                                                 <constraint firstAttribute="centerY" secondItem="JaN-rn-0Y4" secondAttribute="centerY" id="89V-cb-ZTb"/>
                                                 <constraint firstItem="JaN-rn-0Y4" firstAttribute="leading" secondItem="2L8-2K-LCC" secondAttribute="leading" constant="20" id="9Mn-nt-7Cz"/>
+                                                <constraint firstAttribute="bottom" secondItem="JaN-rn-0Y4" secondAttribute="bottom" constant="11" id="Vmv-9L-OLV"/>
                                                 <constraint firstAttribute="trailing" secondItem="JaN-rn-0Y4" secondAttribute="trailing" constant="20" id="ccu-wM-t7k"/>
+                                                <constraint firstItem="JaN-rn-0Y4" firstAttribute="top" secondItem="2L8-2K-LCC" secondAttribute="top" constant="11" id="vmi-v3-ZSS"/>
                                             </constraints>
                                         </tableViewCellContentView>
                                     </tableViewCell>
@@ -73,6 +75,8 @@
                                                 <constraint firstAttribute="centerY" secondItem="ac9-QS-9mn" secondAttribute="centerY" id="3cY-j8-hZn"/>
                                                 <constraint firstItem="ac9-QS-9mn" firstAttribute="leading" secondItem="aOL-2C-IIf" secondAttribute="leading" constant="20" id="99s-7u-3Fr"/>
                                                 <constraint firstAttribute="trailing" secondItem="ac9-QS-9mn" secondAttribute="trailing" constant="20" id="VwZ-r9-T5X"/>
+                                                <constraint firstItem="ac9-QS-9mn" firstAttribute="top" secondItem="aOL-2C-IIf" secondAttribute="top" constant="11" id="YU7-hw-XBw"/>
+                                                <constraint firstAttribute="bottom" secondItem="ac9-QS-9mn" secondAttribute="bottom" constant="11" id="xKM-EV-tCz"/>
                                             </constraints>
                                         </tableViewCellContentView>
                                     </tableViewCell>
@@ -104,6 +108,7 @@
                                                 <constraint firstAttribute="trailing" secondItem="PA1-9x-ghg" secondAttribute="trailing" constant="15" id="8SO-KW-7zs"/>
                                                 <constraint firstAttribute="bottom" secondItem="un2-QL-ZIE" secondAttribute="bottom" id="IXc-Wg-TyX"/>
                                                 <constraint firstAttribute="trailing" secondItem="un2-QL-ZIE" secondAttribute="trailing" constant="15" id="Q31-Qg-j5K"/>
+                                                <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="PA1-9x-ghg" secondAttribute="bottom" constant="9" id="TNQ-la-W8S"/>
                                                 <constraint firstItem="PA1-9x-ghg" firstAttribute="top" secondItem="fdh-hi-O41" secondAttribute="top" constant="9" id="cxx-5r-97y"/>
                                                 <constraint firstItem="PA1-9x-ghg" firstAttribute="leading" secondItem="fdh-hi-O41" secondAttribute="leading" constant="20" id="gXV-gv-UnK"/>
                                                 <constraint firstItem="un2-QL-ZIE" firstAttribute="leading" secondItem="fdh-hi-O41" secondAttribute="leading" constant="15" id="ly0-EH-q0R"/>
