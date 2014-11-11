@@ -951,7 +951,7 @@ static PLCrashReporterCallbacks plCrashCallbacks = {
 
     if (!BITHockeyBundle() || bit_isRunningInAppExtension()) {
       [self sendNextCrashReport];
-    } else if (_crashManagerStatus != BITCrashManagerStatusAutoSend && notApprovedReportFilename) {
+    } else if ((_crashManagerStatus != BITCrashManagerStatusAutoSend || self.reportMode == BITCrashManagerReportModeComposeView) && notApprovedReportFilename) {
       
       if (self.delegate != nil && [self.delegate respondsToSelector:@selector(crashManagerWillShowSubmitCrashReportAlert:)]) {
         [self.delegate crashManagerWillShowSubmitCrashReportAlert:self];
