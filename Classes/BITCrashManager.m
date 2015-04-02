@@ -1406,7 +1406,8 @@ static PLCrashReporterCallbacks plCrashCallbacks = {
 
 - (void)crashReportComposeViewControllerDidCancel:(BITCrashReportComposeViewController *)composeViewController
 {
-  [composeViewController dismissViewControllerAnimated:YES completion:nil];
+    [self handleUserInput:BITCrashManagerUserInputDontSend withUserProvidedMetaData:nil];
+    [composeViewController dismissViewControllerAnimated:YES completion:nil];
 }
 
 
