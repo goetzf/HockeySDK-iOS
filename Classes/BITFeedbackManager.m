@@ -53,6 +53,8 @@
 #define kBITFeedbackLastMessageID   @"HockeyFeedbackLastMessageID"
 #define kBITFeedbackAppID           @"HockeyFeedbackAppID"
 
+NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttachmentThumbnail";
+
 @interface BITFeedbackManager()<UIGestureRecognizerDelegate>
 
 @property (nonatomic, strong) UITapGestureRecognizer *tapRecognizer;
@@ -222,6 +224,8 @@
 
 - (BITFeedbackComposeViewController *)feedbackComposeViewController {
   BITFeedbackComposeViewController *composeViewController = [[BITFeedbackComposeViewController alloc] init];
+  [composeViewController prepareWithItems:self.feedbackComposerPreparedItems];
+    
   // by default set the delegate to be identical to the one of BITFeedbackManager
   [composeViewController setDelegate:self.delegate];
   return composeViewController;
@@ -1088,7 +1092,9 @@
         self.tapRecognizer.delegate = self;
         
         dispatch_async(dispatch_get_main_queue(), ^{
-          [[UIApplication sharedApplication].keyWindow addGestureRecognizer:self.tapRecognizer];
+          if (self.tapRecognizer) {
+            [[UIApplication sharedApplication].keyWindow addGestureRecognizer:self.tapRecognizer];
+          }
         });
       }
       

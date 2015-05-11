@@ -76,6 +76,10 @@ NSBundle *BITHockeyBundle(void);
 NSString *BITHockeyLocalizedString(NSString *stringToken);
 NSString *BITHockeyMD5(NSString *str);
 
+#ifndef __IPHONE_8_0
+#define __IPHONE_8_0     80000
+#endif
+
 #ifdef __IPHONE_6_0
 
 #define kBITTextLabelAlignmentCenter        NSTextAlignmentCenter

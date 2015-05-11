@@ -56,6 +56,8 @@
 @property (nonatomic, strong) UIScrollView *attachmentScrollView;
 @property (nonatomic, strong) NSMutableArray *attachmentScrollViewImageViews;
 
+@property (nonatomic, strong) UIButton *addPhotoButton;
+
 @property (nonatomic, strong) NSString *text;
 
 @property (nonatomic, strong) NSMutableArray *attachments;
@@ -64,6 +66,14 @@
 @property (nonatomic, strong) UIView *textAccessoryView;
 @property (nonatomic) NSInteger selectedAttachmentIndex;
 @property (nonatomic, strong) UITapGestureRecognizer *tapRecognizer;
+
+/** 
+ * Workaround for UIImagePickerController bug.
+ * The statusBar shows up when the UIImagePickerController opens.
+ * The status bar does not disappear again when the UIImagePickerController is dismissed.
+ * Therefore store the state when UIImagePickerController is shown and restore when viewWillAppear gets called.
+ */
+@property (nonatomic, strong) NSNumber *isStatusBarHiddenBeforeShowingPhotoPicker;
 
 @end
 
@@ -144,9 +154,17 @@
   NSDictionary* info = [aNotification userInfo];
   CGSize kbSize = [[info objectForKey:UIKeyboardFrameBeginUserInfoKey] CGRectValue].size;
   
+  BOOL isPortraitOrientation = NO;
+
+#if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_8_0
+  isPortraitOrientation = UIInterfaceOrientationIsPortrait([[UIApplication sharedApplication] statusBarOrientation]);
+#else
+  isPortraitOrientation = UIInterfaceOrientationIsPortrait(self.interfaceOrientation);
+#endif
+  
   CGRect frame = CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height);
   if (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPad) {
-    if (!bit_isPreiOS8Environment() || UIInterfaceOrientationIsPortrait(self.interfaceOrientation)) {
+    if (!bit_isPreiOS8Environment() || isPortraitOrientation) {
       frame.size.height -= kbSize.height;
     } else {
       frame.size.height -= kbSize.width;
@@ -156,7 +174,7 @@
     CGFloat windowHeight = windowSize.height - 20;
     CGFloat navBarHeight = self.navigationController.navigationBar.frame.size.height;
     
-    if (!bit_isPreiOS8Environment() || UIInterfaceOrientationIsPortrait(self.interfaceOrientation)) {
+    if (!bit_isPreiOS8Environment() || isPortraitOrientation) {
       CGFloat modalGap = (windowHeight - self.view.bounds.size.height) / 2;
       frame.size.height = windowHeight - navBarHeight - kbSize.height;
       if (bit_isPreiOS8Environment()) {
@@ -221,13 +239,14 @@
   // Add Photo Button + Container that's displayed above the keyboard.
   self.textAccessoryView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, CGRectGetWidth(self.view.frame), 44)];
   self.textAccessoryView.backgroundColor = [UIColor colorWithRed:0.9f green:0.9f blue:0.9f alpha:1.0f];
-  UIButton *addPhotoButton = [UIButton buttonWithType:UIButtonTypeCustom];
-  [addPhotoButton setTitle:BITHockeyLocalizedString(@"HockeyFeedbackComposeAttachmentAddImage") forState:UIControlStateNormal];
-  [addPhotoButton setTitleColor:[UIColor darkGrayColor] forState:UIControlStateNormal];
-  addPhotoButton.frame = CGRectMake(0, 0, CGRectGetWidth(self.view.frame), 44);
-  [addPhotoButton addTarget:self action:@selector(addPhotoAction:) forControlEvents:UIControlEventTouchUpInside];
+  self.addPhotoButton = [UIButton buttonWithType:UIButtonTypeCustom];
+  [self.addPhotoButton setTitle:BITHockeyLocalizedString(@"HockeyFeedbackComposeAttachmentAddImage") forState:UIControlStateNormal];
+  [self.addPhotoButton setTitleColor:[UIColor darkGrayColor] forState:UIControlStateNormal];
+  [self.addPhotoButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateDisabled];
+  self.addPhotoButton.frame = CGRectMake(0, 0, CGRectGetWidth(self.view.frame), 44);
+  [self.addPhotoButton addTarget:self action:@selector(addPhotoAction:) forControlEvents:UIControlEventTouchUpInside];
   
-  [self.textAccessoryView addSubview:addPhotoButton];
+  [self.textAccessoryView addSubview:self.addPhotoButton];
   
   self.textView.inputAccessoryView = self.textAccessoryView;
   
@@ -264,7 +283,13 @@
   if (_text && self.textView.text.length == 0) {
     self.textView.text = _text;
   }
+
+  if (self.isStatusBarHiddenBeforeShowingPhotoPicker) {
+    [[UIApplication sharedApplication] setStatusBarHidden:self.isStatusBarHiddenBeforeShowingPhotoPicker.boolValue];
+  }
   
+  self.isStatusBarHiddenBeforeShowingPhotoPicker = nil;
+
   [self updateBarButtonState];
 }
 
@@ -321,7 +346,8 @@
   
   if (!alreadySetup) {
     textViewFrame.size.width -= scrollViewWidth;
-    scrollViewFrame = CGRectMake(CGRectGetMaxX(textViewFrame), self.view.frame.origin.y, scrollViewWidth, CGRectGetHeight(self.view.bounds));
+    // height has to be identical to the textview!
+    scrollViewFrame = CGRectMake(CGRectGetMaxX(textViewFrame), self.view.frame.origin.y, scrollViewWidth, CGRectGetHeight(self.textView.bounds));
     self.textView.frame = textViewFrame;
     self.attachmentScrollView.frame = scrollViewFrame;
     self.attachmentScrollView.contentInset = self.textView.contentInset;
@@ -374,11 +400,20 @@
   }
   
   if (self.imageAttachments.count > 2){
-    self.textView.inputAccessoryView = nil;
+    [self.addPhotoButton setEnabled:NO];
   } else {
-    self.textView.inputAccessoryView = self.textAccessoryView;
-
+    [self.addPhotoButton setEnabled:YES];
   }
+}
+
+- (void)removeAttachmentScrollView {
+  CGRect frame = self.attachmentScrollView.frame;
+  frame.size.width = 0;
+  self.attachmentScrollView.frame = frame;
+  
+  frame = self.textView.frame;
+  frame.size.width += 100;
+  self.textView.frame = frame;
 }
 
 
@@ -386,6 +421,12 @@
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)orientation {
   return YES;
+}
+
+- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation {
+  [self removeAttachmentScrollView];
+  
+  [self refreshAttachmentScrollview];
 }
 
 
@@ -437,7 +478,9 @@
 
 - (void)addPhotoAction:(id)sender {
   if (_actionSheetVisible) return;
-  
+
+  self.isStatusBarHiddenBeforeShowingPhotoPicker = @([[UIApplication sharedApplication] isStatusBarHidden]);
+
   // add photo.
   UIImagePickerController *pickerController = [[UIImagePickerController alloc] init];
   pickerController.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
@@ -482,7 +525,7 @@
   // determine the index of the feedback
   NSInteger index = [self.attachmentScrollViewImageViews indexOfObject:sender];
   
-  self.selectedAttachmentIndex = index;
+  self.selectedAttachmentIndex = (self.attachmentScrollViewImageViews.count - index - 1);
   
   UIActionSheet *actionSheet = [[UIActionSheet alloc] initWithTitle: nil
                                                            delegate: self
@@ -539,10 +582,13 @@
   if (buttonIndex == [actionSheet destructiveButtonIndex]) {
     
     if (self.selectedAttachmentIndex != NSNotFound){
+      UIButton *imageButton = self.attachmentScrollViewImageViews[self.selectedAttachmentIndex];
       BITFeedbackMessageAttachment *attachment = self.imageAttachments[self.selectedAttachmentIndex];
-      [attachment deleteContents]; // mandatory call to delete the files associatd.
+      [attachment deleteContents]; // mandatory call to delete the files associated.
       [self.imageAttachments removeObject:attachment];
       [self.attachments removeObject:attachment];
+      [imageButton removeFromSuperview];
+      [self.attachmentScrollViewImageViews removeObject:imageButton];
     }
     self.selectedAttachmentIndex = NSNotFound;
 

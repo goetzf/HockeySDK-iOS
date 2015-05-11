@@ -113,8 +113,13 @@ typedef NS_ENUM(NSInteger, BITImageAnnotationViewControllerInteractionMode) {
   
   self.imageView.userInteractionEnabled = YES;
   
+#if __IPHONE_OS_VERSION_MIN_REQUIRED >= __IPHONE_8_0
+  self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc ] initWithImage:bit_imageNamed(@"Cancel.png", BITHOCKEYSDK_BUNDLE) landscapeImagePhone:bit_imageNamed(@"Cancel.png", BITHOCKEYSDK_BUNDLE) style:UIBarButtonItemStylePlain target:self action:@selector(discard:)];
+  self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc ] initWithImage:bit_imageNamed(@"Ok.png", BITHOCKEYSDK_BUNDLE) landscapeImagePhone:bit_imageNamed(@"Ok.png", BITHOCKEYSDK_BUNDLE) style:UIBarButtonItemStylePlain target:self action:@selector(save:)];
+#else
   self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc ] initWithImage:bit_imageNamed(@"Cancel.png", BITHOCKEYSDK_BUNDLE) landscapeImagePhone:bit_imageNamed(@"Cancel.png", BITHOCKEYSDK_BUNDLE) style:UIBarButtonItemStyleBordered target:self action:@selector(discard:)];
   self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc ] initWithImage:bit_imageNamed(@"Ok.png", BITHOCKEYSDK_BUNDLE) landscapeImagePhone:bit_imageNamed(@"Ok.png", BITHOCKEYSDK_BUNDLE) style:UIBarButtonItemStyleBordered target:self action:@selector(save:)];
+#endif
   
   self.view.autoresizesSubviews = NO;
 }
@@ -131,9 +136,8 @@ typedef NS_ENUM(NSInteger, BITImageAnnotationViewControllerInteractionMode) {
 
 - (void)viewWillDisappear:(BOOL)animated {
   [super viewWillDisappear:animated];
+  
   [[NSNotificationCenter defaultCenter] removeObserver:self name:UIDeviceOrientationDidChangeNotification object:nil];
-
-  [super viewWillDisappear:animated];
 }
 
 - (BOOL)prefersStatusBarHidden {
@@ -148,7 +152,7 @@ typedef NS_ENUM(NSInteger, BITImageAnnotationViewControllerInteractionMode) {
 - (void)fitImageViewFrame {
   
   CGSize size = [UIScreen mainScreen].bounds.size;
-  if (UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)){
+  if (UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation) && size.height > size.width){
     size = CGSizeMake(size.height, size.width);
   }
   

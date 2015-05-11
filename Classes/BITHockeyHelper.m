@@ -195,20 +195,23 @@ NSString *bit_appAnonID(void) {
     // first check if we already have an install string in the keychain
     NSString *appAnonIDKey = @"appAnonID";
     
-    NSError *error = nil;
+    __block NSError *error = nil;
     appAnonID = [BITKeychainUtils getPasswordForUsername:appAnonIDKey andServiceName:bit_keychainHockeySDKServiceName() error:&error];
     
     if (!appAnonID) {
       appAnonID = bit_UUID();
-      
       // store this UUID in the keychain (on this device only) so we can be sure to always have the same ID upon app startups
       if (appAnonID) {
-        [BITKeychainUtils storeUsername:appAnonIDKey
-                            andPassword:appAnonID
-                         forServiceName:bit_keychainHockeySDKServiceName()
-                         updateExisting:YES
-                          accessibility:kSecAttrAccessibleWhenUnlockedThisDeviceOnly
-                                  error:&error];
+        // add to keychain in a background thread, since we got reports that storing to the keychain may take several seconds sometimes and cause the app to be killed
+        // and we don't care about the result anyway
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
+          [BITKeychainUtils storeUsername:appAnonIDKey
+                              andPassword:appAnonID
+                           forServiceName:bit_keychainHockeySDKServiceName()
+                           updateExisting:YES
+                            accessibility:kSecAttrAccessibleAlwaysThisDeviceOnly
+                                    error:&error];
+        });
       }
     }
   });
@@ -618,7 +621,7 @@ UIImage *bit_imageWithContentsOfResolutionIndependentFile(NSString *path) {
 
 
 UIImage *bit_imageNamed(NSString *imageName, NSString *bundleName) {
-  NSString *resourcePath = [[NSBundle mainBundle] resourcePath];
+  NSString *resourcePath = [[NSBundle bundleForClass:[BITHockeyManager class]] resourcePath];
   NSString *bundlePath = [resourcePath stringByAppendingPathComponent:bundleName];
   NSString *imagePath = [bundlePath stringByAppendingPathComponent:imageName];
   return bit_imageWithContentsOfResolutionIndependentFile(imagePath);
@@ -739,7 +742,10 @@ UIImage *bit_screenshot(void) {
   BOOL isLandscapeRight = [UIApplication sharedApplication].statusBarOrientation == UIInterfaceOrientationLandscapeRight;
   BOOL isUpsideDown = [UIApplication sharedApplication].statusBarOrientation == UIInterfaceOrientationPortraitUpsideDown;
   
-  if (isLandscapeLeft ||isLandscapeRight) {
+  BOOL needsRotation = NO;
+  
+  if ((isLandscapeLeft ||isLandscapeRight) && imageSize.height > imageSize.width) {
+    needsRotation = YES;
     CGFloat temp = imageSize.width;
     imageSize.width = imageSize.height;
     imageSize.height = temp;
@@ -768,10 +774,12 @@ UIImage *bit_screenshot(void) {
                             -[window bounds].size.width * [[window layer] anchorPoint].x,
                             -[window bounds].size.height * [[window layer] anchorPoint].y);
       
-      if (isLandscapeLeft) {
-        CGContextConcatCTM(context, CGAffineTransformRotate(CGAffineTransformMakeTranslation( imageSize.width, 0), M_PI / 2.0));
-      } else if (isLandscapeRight) {
-        CGContextConcatCTM(context, CGAffineTransformRotate(CGAffineTransformMakeTranslation( 0, imageSize.height), 3 * M_PI / 2.0));
+      if (needsRotation) {
+        if (isLandscapeLeft) {
+          CGContextConcatCTM(context, CGAffineTransformRotate(CGAffineTransformMakeTranslation( imageSize.width, 0), M_PI / 2.0));
+        } else if (isLandscapeRight) {
+          CGContextConcatCTM(context, CGAffineTransformRotate(CGAffineTransformMakeTranslation( 0, imageSize.height), 3 * M_PI / 2.0));
+        }
       } else if (isUpsideDown) {
         CGContextConcatCTM(context, CGAffineTransformRotate(CGAffineTransformMakeTranslation( imageSize.width, imageSize.height), M_PI));
       }
