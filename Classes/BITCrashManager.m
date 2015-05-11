@@ -134,6 +134,7 @@ static PLCrashReporterCallbacks plCrashCallbacks = {
     _plCrashReporter = nil;
     _exceptionHandler = nil;
     _crashCallBacks = nil;
+    _processingDelay = 0.5;
     
     _crashIdenticalCurrentVersion = YES;
     
@@ -909,8 +910,13 @@ static PLCrashReporterCallbacks plCrashCallbacks = {
 #pragma mark - Crash Report Processing
 
 - (void)triggerDelayedProcessing {
-  [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(invokeDelayedProcessing) object:nil];
-  [self performSelector:@selector(invokeDelayedProcessing) withObject:nil afterDelay:0.5];
+  if (self.processingDelay > 0) {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(invokeDelayedProcessing) object:nil];
+    [self performSelector:@selector(invokeDelayedProcessing) withObject:nil afterDelay:self.processingDelay];
+  }
+  else {
+    [self invokeDelayedProcessing];
+  }
 }
 
 /**

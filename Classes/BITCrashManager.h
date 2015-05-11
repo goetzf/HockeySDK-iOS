@@ -342,6 +342,16 @@ typedef NS_ENUM(NSUInteger, BITCrashManagerReportMode) {
  */
 @property (nonatomic, readonly) BOOL didCrashInLastSession;
 
+
+/**
+ The duration by which crash processing should be delayed.
+ 
+ Defaults to 0.5 seconds. This duration is used to wait until showing crash dialogue
+ or automatically submissing crash reports. Set to 0 to cause immeditate processing.
+ */
+@property (nonatomic) NSTimeInterval processingDelay;
+
+
 /**
  Provides an interface to pass user input from a custom alert to a crash report
  
