@@ -344,6 +344,11 @@ typedef NS_ENUM(NSUInteger, BITCrashManagerReportMode) {
 
 
 /**
+ Whether or not the manager is about to submit a pending crash report or not.
+ */
+@property (nonatomic, readonly) BOOL hasPendingCrashReport;
+
+/**
  The duration by which crash processing should be delayed.
  
  Defaults to 0.5 seconds. This duration is used to wait until showing crash dialogue
