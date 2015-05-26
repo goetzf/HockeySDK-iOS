@@ -63,6 +63,37 @@
     [self.problemDescriptionTextView becomeFirstResponder];
 }
 
+- (void)viewDidLayoutSubviews
+{
+  [super viewDidLayoutSubviews];
+  
+  // Check if header view height has changed or not, then update as needed
+  if (self.tableView.tableHeaderView && [self updateHeaderViewHeightIfNeeded]) {
+    UIView *view = self.tableView.tableHeaderView;
+    
+    self.tableView.tableHeaderView = nil;
+    self.tableView.tableHeaderView = view;
+  }
+}
+
+- (BOOL)updateHeaderViewHeightIfNeeded
+{
+  UIView *headerView = self.tableView.tableHeaderView;
+  
+  // Calculate required height of header view
+  CGRect frame = headerView.frame;
+  CGSize size = [headerView systemLayoutSizeFittingSize: CGSizeMake(self.tableView.frame.size.width, 0) withHorizontalFittingPriority:UILayoutPriorityRequired verticalFittingPriority:UILayoutPriorityFittingSizeLevel];
+  frame.size.height = size.height;
+  
+  // Update frame if needed
+  if (!CGRectEqualToRect(headerView.frame, frame)) {
+    headerView.frame = frame;
+    return YES;
+  } else {
+    return NO;
+  }
+}
+
 - (void)prepareWithUserName:(NSString *)userName userEmail:(NSString *)userEmail
 {
   _userName = userName;
