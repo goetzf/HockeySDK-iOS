@@ -245,6 +245,23 @@
 /* Email Placeholder */
 "HockeyFeedbackUserDataEmailPlaceholder" = "correo@ejemplo.com";
 
+/* Compose Crash Report Feedback */
+
+/* Title */
+"HockeyCrashReportComposeTitle" = "New Crash Report";
+
+/* Send button */
+"HockeyCrashReportComposeSend" = "Send";
+
+/* Description label shown at the top of crash report. The first placeholder is replaced by the application name, the second placeholder is replaced by the company name. */
+"HockeyCrashReportDescription" = "%@ unexpectedly quit. Would you like to send a crash report to %@? This may help fixing the issue.";
+
+/* Description label shown at the top of crash report. The first placeholder is replaced by the application name. This string is used when no company name is set. */
+"HockeyCrashReportShortDescription" = "%@ unexpectedly quit. Would you like to send a crash report? This may help fixing the issue.";
+
+/* Replacement for app name if it could not be detected */
+"HockeyCrashReportAppNamePlaceholder" = "The app";
+
 
 /* Authenticator */
 

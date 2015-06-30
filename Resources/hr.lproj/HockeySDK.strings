@@ -245,6 +245,23 @@
 /* Email Placeholder */
 "HockeyFeedbackUserDataEmailPlaceholder" = "email@primjer.com";
 
+/* Compose Crash Report Feedback */
+
+/* Title */
+"HockeyCrashReportComposeTitle" = "New Crash Report";
+
+/* Send button */
+"HockeyCrashReportComposeSend" = "Send";
+
+/* Description label shown at the top of crash report. The first placeholder is replaced by the application name, the second placeholder is replaced by the company name. */
+"HockeyCrashReportDescription" = "%@ unexpectedly quit. Would you like to send a crash report to %@? This may help fixing the issue.";
+
+/* Description label shown at the top of crash report. The first placeholder is replaced by the application name. This string is used when no company name is set. */
+"HockeyCrashReportShortDescription" = "%@ unexpectedly quit. Would you like to send a crash report? This may help fixing the issue.";
+
+/* Replacement for app name if it could not be detected */
+"HockeyCrashReportAppNamePlaceholder" = "The app";
+
 
 /* Authenticator */
 
@@ -268,7 +285,6 @@
 
 /* Error presented to the user if authentication failed because of networking issues */
 "HockeyAuthenticationViewControllerNetworkError" = "Autorizacija nije uspjela. Vaš uređaj nema pristup internetu. Molimo Vas pokušajte iznova.";
-
 
 "HockeyAuthenticationFailedAuthenticate" = "Autorizacija nije uspjela. Molimo Vas pokušajte iznova ili kontaktirajte razvojnog programera ove aplikacije.";
 "HockeyAuthenticationNotMember" = "Vi niste autorizirani za korištenje ove aplikacije. Molimo Vas kontaktirajte razvojnog programera ove aplikacije.";

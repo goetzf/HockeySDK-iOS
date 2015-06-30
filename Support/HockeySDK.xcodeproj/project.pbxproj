@@ -226,6 +226,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0CA86B245DAAB402AE56E3F5 /* ru */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = ru; path = ../Resources/ru.lproj/BITCrashReportComposeViewController.storyboard; sourceTree = "<group>"; };
 		1E0828FF1708F69A0073050E /* BITStoreUpdateManagerDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BITStoreUpdateManagerDelegate.h; sourceTree = "<group>"; };
 		1E0FEE26173BDB260061331F /* BITKeychainUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BITKeychainUtils.h; sourceTree = "<group>"; };
 		1E0FEE27173BDB260061331F /* BITKeychainUtils.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BITKeychainUtils.m; sourceTree = "<group>"; };
@@ -237,8 +238,8 @@
 		1E1127C116580C87007067A2 /* buttonRoundedRegular@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "buttonRoundedRegular@2x.png"; sourceTree = "<group>"; };
 		1E1127C216580C87007067A2 /* buttonRoundedRegularHighlighted.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = buttonRoundedRegularHighlighted.png; sourceTree = "<group>"; };
 		1E1127C316580C87007067A2 /* buttonRoundedRegularHighlighted@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "buttonRoundedRegularHighlighted@2x.png"; sourceTree = "<group>"; };
-		1E20A57F181E9D4600D5B770 /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/HockeySDK.strings; sourceTree = "<group>"; };
-		1E36D8B816667611000B134C /* hr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hr; path = hr.lproj/HockeySDK.strings; sourceTree = "<group>"; };
+		1E20A57F181E9D4600D5B770 /* nl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/HockeySDK.strings; sourceTree = "<group>"; };
+		1E36D8B816667611000B134C /* hr */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = hr; path = hr.lproj/HockeySDK.strings; sourceTree = "<group>"; };
 		1E494AEA19491943001EFF74 /* AppIcon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = AppIcon.png; sourceTree = "<group>"; };
 		1E494AEB19491943001EFF74 /* AppIcon@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "AppIcon@2x.png"; sourceTree = "<group>"; };
 		1E49A42D1612223B00463151 /* BITFeedbackComposeViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BITFeedbackComposeViewController.h; sourceTree = "<group>"; };
@@ -307,7 +308,7 @@
 		1E5A459F16F0DFC200B55C04 /* HockeySDKTests-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "HockeySDKTests-Prefix.pch"; sourceTree = "<group>"; };
 		1E61CCAE18E0585A00A5E38E /* BITFeedbackManagerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BITFeedbackManagerTests.m; sourceTree = "<group>"; };
 		1E66CA9115D4100500F35BED /* buildnumber.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = buildnumber.xcconfig; sourceTree = "<group>"; };
-		1E6F0450167B5E5600ED1C86 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/HockeySDK.strings"; sourceTree = "<group>"; };
+		1E6F0450167B5E5600ED1C86 /* pt-PT */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/HockeySDK.strings"; sourceTree = "<group>"; };
 		1E70A22F17F2F982001BB32D /* live_report_empty.plcrash */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = live_report_empty.plcrash; sourceTree = "<group>"; };
 		1E70A23017F2F982001BB32D /* live_report_exception.plcrash */ = {isa = PBXFileReference; lastKnownFileType = file; path = live_report_exception.plcrash; sourceTree = "<group>"; };
 		1E70A23117F2F982001BB32D /* live_report_signal.plcrash */ = {isa = PBXFileReference; lastKnownFileType = file; path = live_report_signal.plcrash; sourceTree = "<group>"; };
@@ -338,10 +339,10 @@
 		1EA1170516F53B91001C015C /* BITTestHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BITTestHelper.h; sourceTree = "<group>"; };
 		1EA1170616F53B91001C015C /* BITTestHelper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BITTestHelper.m; sourceTree = "<group>"; };
 		1EA1170816F53E3A001C015C /* StoreBundleIdentifierKnown.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = StoreBundleIdentifierKnown.json; sourceTree = "<group>"; };
-		1EA512DF167F7EF000FC9FBA /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/HockeySDK.strings"; sourceTree = "<group>"; };
+		1EA512DF167F7EF000FC9FBA /* zh-Hans */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/HockeySDK.strings"; sourceTree = "<group>"; };
 		1EACC979162F041E007578C5 /* BITAttributedLabel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BITAttributedLabel.h; sourceTree = "<group>"; };
 		1EACC97A162F041E007578C5 /* BITAttributedLabel.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = BITAttributedLabel.m; sourceTree = "<group>"; };
-		1EB52FC3167B73D400C801D5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/HockeySDK.strings; sourceTree = "<group>"; };
+		1EB52FC3167B73D400C801D5 /* en */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/HockeySDK.strings; sourceTree = "<group>"; };
 		1EB92E711955C38C0093C8B6 /* BITHockeyAttachment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BITHockeyAttachment.h; sourceTree = "<group>"; };
 		1EB92E721955C38C0093C8B6 /* BITHockeyAttachment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BITHockeyAttachment.m; sourceTree = "<group>"; };
 		1ECA8F4B192B5BD8006B9416 /* BITCrashDetailsPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BITCrashDetailsPrivate.h; sourceTree = "<group>"; };
@@ -355,6 +356,12 @@
 		1EF95CA9162CB313000AE3AD /* BITFeedbackComposeViewControllerDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BITFeedbackComposeViewControllerDelegate.h; sourceTree = "<group>"; };
 		1EFF03D717F20F8300A5F13C /* BITCrashManagerPrivate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BITCrashManagerPrivate.h; sourceTree = "<group>"; };
 		1EFF03E417F2485500A5F13C /* BITCrashManagerTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BITCrashManagerTests.m; sourceTree = "<group>"; };
+		2670C9207288ECDC1A941F9A /* pt */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = pt; path = ../Resources/pt.lproj/BITCrashReportComposeViewController.storyboard; sourceTree = "<group>"; };
+		30F040BA18C9148A61C6E65E /* nl */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = nl; path = ../Resources/nl.lproj/BITCrashReportComposeViewController.storyboard; sourceTree = "<group>"; };
+		3A229E1699425755C633EA2F /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = "zh-Hans"; path = "../Resources/zh-Hans.lproj/BITCrashReportComposeViewController.storyboard"; sourceTree = "<group>"; };
+		46E3F2400F30DBF81D3D04EE /* ja */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = ja; path = ../Resources/ja.lproj/BITCrashReportComposeViewController.storyboard; sourceTree = "<group>"; };
+		7F631788597DD37359A23A5B /* it */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = it; path = ../Resources/it.lproj/BITCrashReportComposeViewController.storyboard; sourceTree = "<group>"; };
+		811F90BA9474E7A16BE6B754 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = "pt-PT"; path = "../Resources/pt-PT.lproj/BITCrashReportComposeViewController.storyboard"; sourceTree = "<group>"; };
 		973EC8B518BCA8A200DBFFBB /* BITRectangleImageAnnotation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BITRectangleImageAnnotation.h; sourceTree = "<group>"; };
 		973EC8B618BCA8A200DBFFBB /* BITRectangleImageAnnotation.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BITRectangleImageAnnotation.m; sourceTree = "<group>"; };
 		973EC8B918BDE29800DBFFBB /* BITArrowImageAnnotation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BITArrowImageAnnotation.h; sourceTree = "<group>"; };
@@ -384,11 +391,16 @@
 		97F0FA0018AE375E00EF50AA /* BITImageAnnotationViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BITImageAnnotationViewController.m; sourceTree = "<group>"; };
 		97F0FA0218AE5AED00EF50AA /* BITFeedbackMessageAttachment.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BITFeedbackMessageAttachment.h; sourceTree = "<group>"; };
 		97F0FA0318AE5AED00EF50AA /* BITFeedbackMessageAttachment.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BITFeedbackMessageAttachment.m; sourceTree = "<group>"; };
-		BEE0207C16C5107E004426EA /* hu */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hu; path = hu.lproj/HockeySDK.strings; sourceTree = "<group>"; };
+		AA7AC4F3E510B6B90E5237DF /* fr */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = fr; path = ../Resources/fr.lproj/BITCrashReportComposeViewController.storyboard; sourceTree = "<group>"; };
+		BEE0207C16C5107E004426EA /* hu */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = hu; path = hu.lproj/HockeySDK.strings; sourceTree = "<group>"; };
+		CE1F9E3335D34E871650060A /* es */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = es; path = ../Resources/es.lproj/BITCrashReportComposeViewController.storyboard; sourceTree = "<group>"; };
 		CFEDEB901A11072900E27F78 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = en; path = ../Resources/en.lproj/BITCrashReportComposeViewController.storyboard; sourceTree = "<group>"; };
 		CFF0BFA91A0D2948008E9522 /* BITCrashReportComposeViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BITCrashReportComposeViewController.h; sourceTree = "<group>"; };
 		CFF0BFAA1A0D2948008E9522 /* BITCrashReportComposeViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BITCrashReportComposeViewController.m; sourceTree = "<group>"; };
 		CFF0BFAE1A0D38DD008E9522 /* BITCrashReportComposeViewControllerDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BITCrashReportComposeViewControllerDelegate.h; sourceTree = "<group>"; };
+		D88E06023D4C63D45FD4D501 /* de */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = de; path = ../Resources/de.lproj/BITCrashReportComposeViewController.storyboard; sourceTree = "<group>"; };
+		D9D13B1365122A839A6E8826 /* hu */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = hu; path = ../Resources/hu.lproj/BITCrashReportComposeViewController.storyboard; sourceTree = "<group>"; };
+		DCDAC3D6F30725F9B9FA129F /* hr */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = hr; path = ../Resources/hr.lproj/BITCrashReportComposeViewController.storyboard; sourceTree = "<group>"; };
 		E400561D148D79B500EB22B9 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		E405266117A2AD300096359C /* BITFeedbackManagerDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BITFeedbackManagerDelegate.h; sourceTree = "<group>"; };
 		E40E0B0817DA19DC005E38C1 /* BITHockeyAppClientTests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BITHockeyAppClientTests.m; sourceTree = "<group>"; };
@@ -620,7 +632,6 @@
 				CFF0BFA91A0D2948008E9522 /* BITCrashReportComposeViewController.h */,
 				CFF0BFAA1A0D2948008E9522 /* BITCrashReportComposeViewController.m */,
 				CFF0BFAE1A0D38DD008E9522 /* BITCrashReportComposeViewControllerDelegate.h */,
-				CFEDEB8F1A11072900E27F78 /* BITCrashReportComposeViewController.storyboard */,
 				1E754E5A1621FBB70070AB92 /* BITCrashReportTextFormatter.h */,
 				1E754E5B1621FBB70070AB92 /* BITCrashReportTextFormatter.m */,
 			);
@@ -732,6 +743,7 @@
 				1EDA60CF15C2C1450032D10B /* HockeySDK-Info.plist */,
 				1E5955A415B71BDC00A03429 /* Images */,
 				1E59555F15B6F80E00A03429 /* HockeySDK.strings */,
+				CFEDEB8F1A11072900E27F78 /* BITCrashReportComposeViewController.storyboard */,
 			);
 			name = Resources;
 			path = ../Resources;
@@ -928,12 +940,8 @@
 				"pt-PT",
 				pt,
 				ru,
-				sv,
-				tr,
 				hr,
-				zh,
 				"zh-Hans",
-				ro,
 				hu,
 			);
 			mainGroup = E400560F148D79B500EB22B9;
@@ -1185,8 +1193,21 @@
 			isa = PBXVariantGroup;
 			children = (
 				CFEDEB901A11072900E27F78 /* en */,
+				30F040BA18C9148A61C6E65E /* nl */,
+				D88E06023D4C63D45FD4D501 /* de */,
+				D9D13B1365122A839A6E8826 /* hu */,
+				DCDAC3D6F30725F9B9FA129F /* hr */,
+				46E3F2400F30DBF81D3D04EE /* ja */,
+				7F631788597DD37359A23A5B /* it */,
+				AA7AC4F3E510B6B90E5237DF /* fr */,
+				CE1F9E3335D34E871650060A /* es */,
+				811F90BA9474E7A16BE6B754 /* pt-PT */,
+				0CA86B245DAAB402AE56E3F5 /* ru */,
+				2670C9207288ECDC1A941F9A /* pt */,
+				3A229E1699425755C633EA2F /* zh-Hans */,
 			);
 			name = BITCrashReportComposeViewController.storyboard;
+			path = ../Classes;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
