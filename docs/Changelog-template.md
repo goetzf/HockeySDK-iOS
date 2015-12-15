@@ -1,3 +1,107 @@
+## Version 3.8.5
+
+- [UPDATE] Some minor improvements to our documentation
+- [BUGFIX] Fix a crash where `appStoreReceiptURL` was accidentally accessed on iOS 6
+- [BUGFIX] Fix a warning when implementing `BITHockeyManagerDelegate`
+
+## Version 3.8.4
+
+- [BUGFIX] Fix a missing header in the `HockeySDK.h` umbrella
+- [BUGFIX] Fix several type comparison warnings
+
+## Version 3.8.3
+
+- [NEW] Adds new `appEnvironment` property to indicate the environment the app is running in. This replaces the old `isAppStoreEnvironment` which is now deprecated. We can now differentiate between apps installed via TestFlight or the AppStore
+- [NEW] Distributed zip file now also contains our documentation
+- [UPDATE] Prevent issues with duplicate symbols from PLCrashReporter
+- [UPDATE] Remove several typos in our documentation and improve instructions for use in extensions
+- [UPDATE] Add additional nil-checks before calling blocks
+- [UPDATE] Minor code readability improvements
+- [BUGFIX] `BITFeedbackManager`: Fix Feedback Annotations not working on iPhones running iOS 9
+- [BUGFIX] Switch back to using UIAlertView to prevent several issues. We will add a more robust solution which uses UIAlertController in a future update.
+- [BUGFIX] Fix several small issues in our CrashOnly builds
+- [BUGFIX] Minor fixes for memory leaks
+- [BUGFIX] Fix crashes because completion blocks were not properly dispatched on the main thread
+
+## Version 3.8.2
+
+- [UPDATE] Added support for Xcode 6.x 
+- [UPDATE] Requires iOS 7 or later as base SDK, deployment target iOS 6 or later
+- [UPDATE] Updated PLCrashReporter build to exclude Bitcode in Simulator slices
+
+## Version 3.8.1
+
+- [UPDATE] Updated PLCrashReporter build using Xcode 7 (7A220)
+
+## Version 3.8
+
+- [NEW] Added Bitcode support
+- [UPDATE] Requires Xcode 7 or later
+- [UPDATE] Requires iOS 9 or later as base SDK, deployment target iOS 6 or later
+- [UPDATE] Updated PLCrashReporter build using Xcode 7
+- [UPDATE] Use `UIAlertController` when available
+- [UPDATE] Added full support for `NSURLSession`
+- [UPDATE] Removed statusbar adjustment code (which isn't needed any longer)
+- [UPDATE] Removed kBITTextLabel... defines and use NSText.. instead
+- [UPDATE] Removed a few `#if __IPHONE_OS_VERSION_MAX_ALLOWED > __IPHONE_6_1` since iOS 7 or later is now required as base SDK
+- [BUGFIX] `BITFeedbackManager`: Fixed feedback compose view rotation issue
+- [BUGFIX] `BITFeedbackManager`: Fixed `Add Image` button not always presented centered
+- [BUGFIX] Additional minor fixes
+
+## Version 3.8-RC.1
+
+- [UPDATE] Added full support for `NSURLSession`
+- [BUGFIX] `BITFeedbackManager`: Fixed feedback compose view rotation issue
+- [BUGFIX] `BITFeedbackManager`: Fixed `Add Image` button not always presented centered
+- [BUGFIX] Additional minor fixes
+
+## Version 3.8-Beta.1
+
+- [NEW] Added Bitcode support
+- [UPDATE] Requires Xcode 7 or later
+- [UPDATE] Requires iOS 7 or later as base SDK
+- [UPDATE] Silenced deprecation warnings for `NSURLConnection` calls, these will be refactored in a future update
+- [UPDATE] Removed statusbar adjustment code (which isn't needed any longer)
+- [UPDATE] Removed kBITTextLabel... defines and use NSText.. instead
+- [UPDATE] Removed a few `#if __IPHONE_OS_VERSION_MAX_ALLOWED > __IPHONE_6_1` since iOS 7 or later is now required as base SDK
+- [UPDATE] Use `UIAlertController` when available
+
+## Version 3.7.3
+
+- [BUGFIX] `BITCrashManager`: Updated PLCrashReporter build created with Xcode 6.4 to solve a duplicate symbol error some users are experiencing
+- [BUGFIX] `BITUpdateManager`: Fixed updating an app not triggering a crash report if `enableAppNotTerminatingCleanlyDetection` is enabled
+- [BUGFIX] Additional minor fixes
+
+## Version 3.7.2
+
+- [BUGFIX] `BITCrashManager`: Added workaround for a bug observed in iOS 9 beta's dyld triggering an infinite loop on startup
+- [BUGFIX] `BITFeedbackManager`: Fixed a crash in the feedback UI that can occur when rotating the device while data is being loaded
+- [BUGFIX] Fixed `Info.plist` entries in `HockeySDKResources.bundle` which cause Xcode 7 to show an error when uploading an app to iTunes Connect
+- [BUGFIX] Additional minor fixes
+
+## Version 3.7.1
+
+- [BUGFIX] `CocoaPods`: Fixes the default podspec with binary distribution
+- [BUGFIX] `CocoaPods`: Changes `HockeySDK-Source` to use non configurable approach, since we couldn't make it work reliably in all scenarios
+
+## Version 3.7.0
+
+- [NEW] Simplified installation process. If support for modules is enabled in the target project (default for most projects), it’s no longer necessary to add the frameworks manually
+- [NEW] `CocoaPods`: Default pod uses binary distribution and offers crash only build as a subspec
+- [NEW] `CocoaPods`: New `HockeySDK-Source` pod integrates via source code and offers feature set customization via subspecs. Note: We do not support building with Xcode 7 yet!
+- [NEW] `BITCrashManager`: Added support for unhandled C++ exceptions (requires to link `libc++`)
+- [NEW] `BITCrashManager`: Sending crash reports via `NSURLSession` whenever possible
+- [NEW] `BITCrashManager`: Added process ID to `BITCrashDetails`
+- [NEW] `BITCrashManager`: Added `CFBundleShortVersionString` value to crash reports
+- [NEW] `BITFeedbackManager`: "Add Image" button in feedback compose view can now be hidden using `feedbackComposeHideImageAttachmentButton` property
+- [NEW] `BITFeedbackManagerDelegate`: Added `allowAutomaticFetchingForNewFeedbackForManager:` to define if the SDK should fetch new messages on app startup and when the app is coming into foreground. 
+- [NEW] Added disableInstallTracking property to disable installation tracking (AppStore only).
+- [UPDATE] Restructured installation documentation
+- [BUGFIX] `BITCrashManager`: Fixed offline issue showing crash alert over and over again with unsent crash reports
+- [BUGFIX] `BITFeedbackManager`: Improved screenshot handling on slow devices
+- [BUGFIX] `BITStoreUpdateManager`: Delegate property wasn't propagated correctly
+- [BUGFIX] Fixed various compiler warnings & other improvements
+
 ## Version 3.6.4
 
 - [BUGFIX] Fixed a build issue

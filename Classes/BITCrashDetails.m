@@ -26,6 +26,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#import "HockeySDK.h"
+
+#if HOCKEYSDK_FEATURE_CRASH_REPORTER
+
 #import "BITCrashDetails.h"
 #import "BITCrashDetailsPrivate.h"
 
@@ -42,7 +46,9 @@ NSString *const kBITCrashKillSignal = @"SIGKILL";
                                  crashTime:(NSDate *)crashTime
                                  osVersion:(NSString *)osVersion
                                    osBuild:(NSString *)osBuild
+                                appVersion:(NSString *)appVersion
                                   appBuild:(NSString *)appBuild
+                      appProcessIdentifier:(NSUInteger)appProcessIdentifier
 {
   if ((self = [super init])) {
     _incidentIdentifier = incidentIdentifier;
@@ -54,7 +60,9 @@ NSString *const kBITCrashKillSignal = @"SIGKILL";
     _crashTime = crashTime;
     _osVersion = osVersion;
     _osBuild = osBuild;
+    _appVersion = appVersion;
     _appBuild = appBuild;
+    _appProcessIdentifier = appProcessIdentifier;
   }
   return self;
 }
@@ -69,3 +77,5 @@ NSString *const kBITCrashKillSignal = @"SIGKILL";
 }
 
 @end
+
+#endif /* HOCKEYSDK_FEATURE_CRASH_REPORTER */

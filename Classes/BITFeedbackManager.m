@@ -40,6 +40,7 @@
 #import "BITFeedbackManagerPrivate.h"
 #import "BITHockeyBaseManagerPrivate.h"
 
+#import "HockeySDKNullability.h"
 #import "BITHockeyHelper.h"
 #import "BITHockeyAppClient.h"
 
@@ -114,7 +115,6 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
   [self unregisterObservers];
 }
 
-
 - (void)didBecomeActiveActions {
   if ([self isFeedbackManagerDisabled]) return;
   if (!_didEnterBackgroundState) return;
@@ -126,7 +126,10 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
   } else {
     [self updateAppDefinedUserData];
   }
-  [self updateMessagesList];
+  
+  if ([self allowFetchingNewMessages]) {
+    [self updateMessagesList];
+  }
 }
 
 - (void)didEnterBackgroundActions {
@@ -217,14 +220,16 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
     BITHockeyLog(@"INFO: update view already visible, aborting");
     return;
   }
-  
-  [self showView:[self feedbackListViewController:YES]];
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [self showView:[self feedbackListViewController:YES]];
+  });
 }
 
 
 - (BITFeedbackComposeViewController *)feedbackComposeViewController {
   BITFeedbackComposeViewController *composeViewController = [[BITFeedbackComposeViewController alloc] init];
   [composeViewController prepareWithItems:self.feedbackComposerPreparedItems];
+  [composeViewController setHideImageAttachmentButton:self.feedbackComposeHideImageAttachmentButton];
     
   // by default set the delegate to be identical to the one of BITFeedbackManager
   [composeViewController setDelegate:self.delegate];
@@ -242,9 +247,9 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
   }
   BITFeedbackComposeViewController *composeView = [self feedbackComposeViewController];
   [composeView prepareWithItems:items];
-  
-  [self showView:composeView];
-  
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [self showView:composeView];
+  });
 }
 
 - (void)showFeedbackComposeViewWithGeneratedScreenshot {
@@ -274,6 +279,15 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
   }
 }
 
+- (BOOL)allowFetchingNewMessages {
+  BOOL fetchNewMessages = YES;
+  if ([[BITHockeyManager sharedHockeyManager].delegate respondsToSelector:@selector(allowAutomaticFetchingForNewFeedbackForManager:)]) {
+    fetchNewMessages = [[BITHockeyManager sharedHockeyManager].delegate
+                        allowAutomaticFetchingForNewFeedbackForManager:self];
+  }
+  return fetchNewMessages;
+}
+
 - (void)updateMessagesList {
   if (_networkRequestInProgress) return;
   
@@ -297,8 +311,7 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
   
   NSString *userID = [self stringValueFromKeychainForKey:kBITHockeyMetaUserID];
   
-  if ([BITHockeyManager sharedHockeyManager].delegate &&
-      [[BITHockeyManager sharedHockeyManager].delegate respondsToSelector:@selector(userIDForHockeyManager:componentManager:)]) {
+  if ([[BITHockeyManager sharedHockeyManager].delegate respondsToSelector:@selector(userIDForHockeyManager:componentManager:)]) {
     userID = [[BITHockeyManager sharedHockeyManager].delegate
               userIDForHockeyManager:[BITHockeyManager sharedHockeyManager]
               componentManager:self];
@@ -317,8 +330,7 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
   
   NSString *userName = [self stringValueFromKeychainForKey:kBITHockeyMetaUserName];
   
-  if ([BITHockeyManager sharedHockeyManager].delegate &&
-      [[BITHockeyManager sharedHockeyManager].delegate respondsToSelector:@selector(userNameForHockeyManager:componentManager:)]) {
+  if ([[BITHockeyManager sharedHockeyManager].delegate respondsToSelector:@selector(userNameForHockeyManager:componentManager:)]) {
     userName = [[BITHockeyManager sharedHockeyManager].delegate
                 userNameForHockeyManager:[BITHockeyManager sharedHockeyManager]
                 componentManager:self];
@@ -338,8 +350,7 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
   
   NSString *userEmail = [self stringValueFromKeychainForKey:kBITHockeyMetaUserEmail];
   
-  if ([BITHockeyManager sharedHockeyManager].delegate &&
-      [[BITHockeyManager sharedHockeyManager].delegate respondsToSelector:@selector(userEmailForHockeyManager:componentManager:)]) {
+  if ([[BITHockeyManager sharedHockeyManager].delegate respondsToSelector:@selector(userEmailForHockeyManager:componentManager:)]) {
     userEmail = [[BITHockeyManager sharedHockeyManager].delegate
                  userEmailForHockeyManager:[BITHockeyManager sharedHockeyManager]
                  componentManager:self];
@@ -789,15 +800,43 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
         }
         
         if(self.showAlertOnIncomingMessages && !self.currentFeedbackListViewController && !self.currentFeedbackComposeViewController) {
-          UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:BITHockeyLocalizedString(@"HockeyFeedbackNewMessageTitle")
-                                                              message:BITHockeyLocalizedString(@"HockeyFeedbackNewMessageText")
-                                                             delegate:self
-                                                    cancelButtonTitle:BITHockeyLocalizedString(@"HockeyFeedbackIgnore")
-                                                    otherButtonTitles:BITHockeyLocalizedString(@"HockeyFeedbackShow"), nil
-                                    ];
-          [alertView setTag:0];
-          [alertView show];
-          _incomingMessagesAlertShowing = YES;
+          dispatch_async(dispatch_get_main_queue(), ^{
+          /*
+          // Requires iOS 8
+          id uialertcontrollerClass = NSClassFromString(@"UIAlertController");
+          if (uialertcontrollerClass) {
+            UIAlertController *alertController = [UIAlertController alertControllerWithTitle:BITHockeyLocalizedString(@"HockeyFeedbackNewMessageTitle")
+                                                                                     message:BITHockeyLocalizedString(@"HockeyFeedbackNewMessageText")
+                                                                              preferredStyle:UIAlertControllerStyleAlert];
+            
+            UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:BITHockeyLocalizedString(@"HockeyFeedbackIgnore")
+                                                                   style:UIAlertActionStyleCancel
+                                                                 handler:nil];
+            UIAlertAction *showAction = [UIAlertAction actionWithTitle:BITHockeyLocalizedString(@"HockeyFeedbackShow")
+                                                                 style:UIAlertActionStyleDefault
+                                                               handler:^(UIAlertAction *__nonnull action) {
+                                                                 [self showFeedbackListView];
+                                                               }];
+            [alertController addAction:cancelAction];
+            [alertController addAction:showAction];
+           
+           [self showAlertController:alertController];
+           } else {
+           */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+            UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:BITHockeyLocalizedString(@"HockeyFeedbackNewMessageTitle")
+                                                                message:BITHockeyLocalizedString(@"HockeyFeedbackNewMessageText")
+                                                               delegate:self
+                                                      cancelButtonTitle:BITHockeyLocalizedString(@"HockeyFeedbackIgnore")
+                                                      otherButtonTitles:BITHockeyLocalizedString(@"HockeyFeedbackShow"), nil
+                                      ];
+            [alertView setTag:0];
+            [alertView show];
+#pragma clang diagnostic pop
+            /*}*/
+            _incomingMessagesAlertShowing = YES;
+          });
         }
       }
     }
@@ -819,7 +858,7 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
 }
 
 
-- (void)sendNetworkRequestWithHTTPMethod:(NSString *)httpMethod withMessage:(BITFeedbackMessage *)message completionHandler:(void (^)(NSError *err))completionHandler {
+- (void)sendNetworkRequestWithHTTPMethod:(NSString *)httpMethod withMessage:(BITFeedbackMessage *)message completionHandler:(void (^)(NSError *error))completionHandler {
   NSString *boundary = @"----FOO";
   
   _networkRequestInProgress = YES;
@@ -870,7 +909,7 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
     [postBody appendData:[BITHockeyAppClient dataWithPostValue:[message text] forKey:@"text" boundary:boundary]];
     [postBody appendData:[BITHockeyAppClient dataWithPostValue:[message token] forKey:@"message_token" boundary:boundary]];
     
-    NSString *installString = bit_appAnonID();
+    NSString *installString = bit_appAnonID(NO);
     if (installString) {
       [postBody appendData:[BITHockeyAppClient dataWithPostValue:installString forKey:@"install_string" boundary:boundary]];
     }
@@ -907,75 +946,102 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
     
     [request setHTTPBody:postBody];
   }
-  
-  [NSURLConnection sendAsynchronousRequest:request queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *responseData, NSError *err) {
-    _networkRequestInProgress = NO;
+  __weak typeof (self) weakSelf = self;
+  id nsurlsessionClass = NSClassFromString(@"NSURLSessionDataTask");
+  if (nsurlsessionClass && !bit_isRunningInAppExtension()) {
+    NSURLSessionConfiguration *sessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
+    NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfiguration];
     
-    if (err) {
-      [self reportError:err];
-      [self markSendInProgressMessagesAsPending];
-      completionHandler(err);
-    } else {
-      NSInteger statusCode = [(NSHTTPURLResponse *)response statusCode];
-      if (statusCode == 404) {
-        // thread has been deleted, we archive it
-        [self updateMessageListFromResponse:nil];
-      } else if (statusCode == 409) {
-        // we submitted a message that is already on the server, mark it as being in conflict and resolve it with another fetch
+    NSURLSessionDataTask *task = [session dataTaskWithRequest:request
+                                            completionHandler: ^(NSData *data, NSURLResponse *response, NSError *error) {
+                                              typeof (self) strongSelf = weakSelf;
+                                              [strongSelf handleFeedbackMessageResponse:response data:data error:error completion:completionHandler];
+                                            }];
+    [task resume];
+
+  }else{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    [NSURLConnection sendAsynchronousRequest:request queue:[NSOperationQueue mainQueue] completionHandler:^(NSURLResponse *response, NSData *responseData, NSError *error) {
+#pragma clang diagnostic pop
+      typeof (self) strongSelf = weakSelf;
+      [strongSelf handleFeedbackMessageResponse:response data:responseData error:error completion:completionHandler];
+    }];
+  }
+
+}
+
+- (void)handleFeedbackMessageResponse:(NSURLResponse *)response data:(NSData *)responseData error:(NSError * )error completion:(void (^)(NSError *error))completionHandler{
+  _networkRequestInProgress = NO;
+  
+  if (error) {
+    [self reportError:error];
+    [self markSendInProgressMessagesAsPending];
+    if (completionHandler) {
+      completionHandler(error);
+    }
+  } else {
+    NSInteger statusCode = [(NSHTTPURLResponse *)response statusCode];
+    if (statusCode == 404) {
+      // thread has been deleted, we archive it
+      [self updateMessageListFromResponse:nil];
+    } else if (statusCode == 409) {
+      // we submitted a message that is already on the server, mark it as being in conflict and resolve it with another fetch
+      
+      if (!self.token) {
+        // set the token to the first message token, since this is identical
+        __block NSString *token = nil;
         
-        if (!self.token) {
-          // set the token to the first message token, since this is identical
-          __block NSString *token = nil;
-          
-          [_feedbackList enumerateObjectsUsingBlock:^(id objMessage, NSUInteger messagesIdx, BOOL *stop) {
-            if ([(BITFeedbackMessage *)objMessage status] == BITFeedbackMessageStatusSendInProgress) {
-              token = [(BITFeedbackMessage *)objMessage token];
-              *stop = YES;
-            }
-          }];
-          
-          if (token) {
-            self.token = token;
+        [_feedbackList enumerateObjectsUsingBlock:^(id objMessage, NSUInteger messagesIdx, BOOL *stop) {
+          if ([(BITFeedbackMessage *)objMessage status] == BITFeedbackMessageStatusSendInProgress) {
+            token = [(BITFeedbackMessage *)objMessage token];
+            *stop = YES;
           }
-        }
+        }];
         
-        [self markSendInProgressMessagesAsInConflict];
-        [self saveMessages];
-        [self performSelector:@selector(fetchMessageUpdates) withObject:nil afterDelay:0.2];
-      } else if ([responseData length]) {
-        NSString *responseString = [[NSString alloc] initWithBytes:[responseData bytes] length:[responseData length] encoding: NSUTF8StringEncoding];
-        BITHockeyLog(@"INFO: Received API response: %@", responseString);
-        
-        if (responseString && [responseString dataUsingEncoding:NSUTF8StringEncoding]) {
-          NSError *error = NULL;
-          
-          NSDictionary *feedDict = (NSDictionary *)[NSJSONSerialization JSONObjectWithData:[responseString dataUsingEncoding:NSUTF8StringEncoding] options:0 error:&error];
-          
-          // server returned empty response?
-          if (error) {
-            [self reportError:error];
-          } else if (![feedDict count]) {
-            [self reportError:[NSError errorWithDomain:kBITFeedbackErrorDomain
-                                                  code:BITFeedbackAPIServerReturnedEmptyResponse
-                                              userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Server returned empty response.", NSLocalizedDescriptionKey, nil]]];
-          } else {
-            BITHockeyLog(@"INFO: Received API response: %@", responseString);
-            NSString *status = [feedDict objectForKey:@"status"];
-            if ([status compare:@"success"] != NSOrderedSame) {
-              [self reportError:[NSError errorWithDomain:kBITFeedbackErrorDomain
-                                                    code:BITFeedbackAPIServerReturnedInvalidStatus
-                                                userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Server returned invalid status.", NSLocalizedDescriptionKey, nil]]];
-            } else {
-              [self updateMessageListFromResponse:feedDict];
-            }
-          }
+        if (token) {
+          self.token = token;
         }
       }
       
-      [self markSendInProgressMessagesAsPending];
-      completionHandler(err);
+      [self markSendInProgressMessagesAsInConflict];
+      [self saveMessages];
+      [self performSelector:@selector(fetchMessageUpdates) withObject:nil afterDelay:0.2];
+    } else if ([responseData length]) {
+      NSString *responseString = [[NSString alloc] initWithBytes:[responseData bytes] length:[responseData length] encoding: NSUTF8StringEncoding];
+      BITHockeyLog(@"INFO: Received API response: %@", responseString);
+      
+      if (responseString && [responseString dataUsingEncoding:NSUTF8StringEncoding]) {
+        NSError *error = NULL;
+        
+        NSDictionary *feedDict = (NSDictionary *)[NSJSONSerialization JSONObjectWithData:[responseString dataUsingEncoding:NSUTF8StringEncoding] options:0 error:&error];
+        
+        // server returned empty response?
+        if (error) {
+          [self reportError:error];
+        } else if (![feedDict count]) {
+          [self reportError:[NSError errorWithDomain:kBITFeedbackErrorDomain
+                                                code:BITFeedbackAPIServerReturnedEmptyResponse
+                                            userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Server returned empty response.", NSLocalizedDescriptionKey, nil]]];
+        } else {
+          BITHockeyLog(@"INFO: Received API response: %@", responseString);
+          NSString *status = [feedDict objectForKey:@"status"];
+          if ([status compare:@"success"] != NSOrderedSame) {
+            [self reportError:[NSError errorWithDomain:kBITFeedbackErrorDomain
+                                                  code:BITFeedbackAPIServerReturnedInvalidStatus
+                                              userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Server returned invalid status.", NSLocalizedDescriptionKey, nil]]];
+          } else {
+            [self updateMessageListFromResponse:feedDict];
+          }
+        }
+      }
     }
-  }];
+    
+    [self markSendInProgressMessagesAsPending];
+    if (completionHandler) {
+      completionHandler(error);
+    }
+  }
 }
 
 - (void)fetchMessageUpdates {
@@ -988,7 +1054,7 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
   
   [self sendNetworkRequestWithHTTPMethod:@"GET"
                              withMessage:nil
-                       completionHandler:^(NSError *err){
+                       completionHandler:^(NSError *error){
                          // inform the UI to update its data in case the list is already showing
                          [[NSNotificationCenter defaultCenter] postNotificationName:BITHockeyFeedbackMessagesLoadingFinished object:nil];
                        }];
@@ -1009,7 +1075,7 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
   
   if ([pendingMessages count] > 0) {
     // we send one message at a time
-    BITFeedbackMessage *messageToSend = [pendingMessages objectAtIndex:0];
+    BITFeedbackMessage *messageToSend = pendingMessages[0];
     
     [messageToSend setStatus:BITFeedbackMessageStatusSendInProgress];
     if (self.userID)
@@ -1026,8 +1092,8 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
     
     [self sendNetworkRequestWithHTTPMethod:httpMethod
                                withMessage:messageToSend
-                         completionHandler:^(NSError *err){
-                           if (err) {
+                         completionHandler:^(NSError *error){
+                           if (error) {
                              [self markSendInProgressMessagesAsPending];
                              [self saveMessages];
                            }
@@ -1054,6 +1120,8 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
 
 #pragma mark - UIAlertViewDelegate
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 // invoke the selected action from the action sheet for a location element
 - (void)alertView:(UIAlertView *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex {
   
@@ -1063,6 +1131,7 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
     [self showFeedbackListView];
   }
 }
+#pragma clang diagnostic pop
 
 #pragma mark - Observation Handling
 
@@ -1109,7 +1178,7 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
 }
 
 -(void)screenshotNotificationReceived:(NSNotification *)notification {
-  double amountOfSeconds = 0.5;
+  double amountOfSeconds = 1.5;
   dispatch_time_t delayTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(amountOfSeconds * NSEC_PER_SEC));
   
   dispatch_after(delayTime, dispatch_get_main_queue(), ^{
@@ -1118,6 +1187,8 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
 }
 
 -(void)extractLastPictureFromLibraryAndLaunchFeedback {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
   ALAssetsLibrary *library = [[ALAssetsLibrary alloc] init];
   
   [library enumerateGroupsWithTypes:ALAssetsGroupSavedPhotos usingBlock:^(ALAssetsGroup *group, BOOL *stop) {
@@ -1137,6 +1208,7 @@ NSString *const kBITFeedbackUpdateAttachmentThumbnail = @"BITFeedbackUpdateAttac
       }
     }];
   } failureBlock: nil];
+#pragma clang diagnostic pop
 }
 
 - (void)screenshotTripleTap:(UITapGestureRecognizer *)tapRecognizer {

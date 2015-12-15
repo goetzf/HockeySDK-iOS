@@ -21,6 +21,11 @@ profile
 *~.nib
 profile
 
+
+# App Code
+**/.idea/
+**/.idea/**
+
 documentation/
 Products/
 *.xccheckout

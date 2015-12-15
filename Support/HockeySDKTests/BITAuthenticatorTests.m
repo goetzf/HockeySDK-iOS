@@ -7,6 +7,7 @@
 //
 
 #import <XCTest/XCTest.h>
+#import <OCMock/OCMock.h>
 
 #define HC_SHORTHAND
 #import <OCHamcrestIOS/OCHamcrestIOS.h>
@@ -15,8 +16,9 @@
 #import <OCMockitoIOS/OCMockitoIOS.h>
 
 #import "HockeySDK.h"
-#import "BITAuthenticator.h"
+#import "HockeySDKPrivate.h"
 #import "BITAuthenticator_Private.h"
+#import "BITHockeyBaseManagerPrivate.h"
 #import "BITHTTPOperation.h"
 #import "BITTestHelper.h"
 #import "BITHockeyAppClient.h"
@@ -56,15 +58,10 @@ static void *kInstallationIdentification = &kInstallationIdentification;
 - (void)setUp {
   [super setUp];
   
-  _sut = [[BITAuthenticator alloc] initWithAppIdentifier:nil isAppStoreEnvironment:NO];
+  _sut = [[BITAuthenticator alloc] initWithAppIdentifier:nil appEnvironment:BITEnvironmentOther];
 }
 
 - (void)tearDown {
-# pragma clang diagnostic push
-# pragma clang diagnostic ignored "-Wimplicit"
-  __gcov_flush();
-# pragma clang diagnostic pop
-  
   [_sut cleanupInternalStorage];
   _sut = nil;
   
@@ -90,7 +87,7 @@ static void *kInstallationIdentification = &kInstallationIdentification;
 #pragma mark - Persistence Tests
 - (void) testThatLastAuthenticatedVersionIsPersisted {
   _sut.lastAuthenticatedVersion = @"1.2.1";
-  _sut = [[BITAuthenticator alloc] initWithAppIdentifier:nil isAppStoreEnvironment:YES];
+  _sut = [[BITAuthenticator alloc] initWithAppIdentifier:nil appEnvironment:BITEnvironmentAppStore];
   assertThat(_sut.lastAuthenticatedVersion, equalTo(@"1.2.1"));
 }
 
@@ -233,10 +230,7 @@ static void *kInstallationIdentification = &kInstallationIdentification;
   _sut.identificationType = BITAuthenticatorIdentificationTypeHockeyAppEmail;
   [_sut storeInstallationIdentifier:@"meh" withType:BITAuthenticatorIdentificationTypeHockeyAppEmail];
   _sut.authenticationSecret = @"double";
-  [_sut authenticationViewController:nil
-       handleAuthenticationWithEmail:@"stephan@dd.de"
-                            password:@"nopass"
-                          completion:nil];
+  [_sut authenticationViewController:nil handleAuthenticationWithEmail:@"stephan@dd.de" request:nil urlSessionSupported:NO completion:nil];
   [verify(httpClientMock) enqeueHTTPOperation:anything()];
 }
 
@@ -268,7 +262,7 @@ static void *kInstallationIdentification = &kInstallationIdentification;
   _sut.identificationType = BITAuthenticatorIdentificationTypeHockeyAppEmail;
   [_sut storeInstallationIdentifier:@"meh" withType:BITAuthenticatorIdentificationTypeHockeyAppEmail];
   _sut.authenticationSecret = @"double";
-  [_sut validateWithCompletion:nil];
+  [_sut validateWithCompletion:nil sessionSupported:NO];
   [verify(httpClientMock) getPath:(id)anything()
                        parameters:(id)anything()
                        completion:(id)anything()];
@@ -276,15 +270,16 @@ static void *kInstallationIdentification = &kInstallationIdentification;
 
 #pragma mark - Authentication
 - (void) testThatEnabledRestrictionTriggersValidation {
-  id clientMock = mock(BITHockeyAppClient.class);
-  _sut.hockeyAppClient = clientMock;
+  id mockAuthenticator = OCMPartialMock(_sut);
   _sut.authenticationSecret = @"sekret";
   _sut.restrictApplicationUsage = YES;
   _sut.identificationType = BITAuthenticatorIdentificationTypeHockeyAppEmail;
   [_sut storeInstallationIdentifier:@"asd" withType:BITAuthenticatorIdentificationTypeHockeyAppEmail];
-  [_sut authenticate];
   
-  [verify(clientMock) getPath:(id)anything() parameters:(id)anything() completion:(id)anything()];
+  
+  OCMExpect([mockAuthenticator validateWithCompletion:(id)anything() sessionSupported:YES]);
+  [_sut authenticate];
+  OCMVerifyAll(mockAuthenticator);
 }
 
 - (void) testThatDisabledRestrictionDoesntTriggerValidation {

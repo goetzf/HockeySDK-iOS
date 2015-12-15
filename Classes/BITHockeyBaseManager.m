@@ -51,8 +51,6 @@
   UINavigationController *_navController;
   
   NSDateFormatter *_rfc3339Formatter;
-  
-  BOOL _isAppStoreEnvironment;
 }
 
 
@@ -77,10 +75,10 @@
   return self;
 }
 
-- (instancetype)initWithAppIdentifier:(NSString *)appIdentifier isAppStoreEnvironment:(BOOL)isAppStoreEnvironment {
+- (instancetype)initWithAppIdentifier:(NSString *)appIdentifier appEnvironment:(BITEnvironment)environment {
   if ((self = [self init])) {
     _appIdentifier = appIdentifier;
-    _isAppStoreEnvironment = isAppStoreEnvironment;
+    _appEnvironment = environment;
   }
   return self;
 }
@@ -90,10 +88,6 @@
 
 - (void)reportError:(NSError *)error {
   BITHockeyLog(@"ERROR: %@", [error localizedDescription]);
-}
-
-- (BOOL)isAppStoreEnvironment {
-  return _isAppStoreEnvironment;
 }
 
 - (NSString *)encodedAppIdentifier {
@@ -149,6 +143,7 @@
   return @"";
 }
 
+#if !defined (HOCKEYSDK_CONFIGURATION_ReleaseCrashOnlyExtensions)
 - (UIWindow *)findVisibleWindow {
   UIWindow *visibleWindow = [UIApplication sharedApplication].keyWindow;
   
@@ -200,12 +195,9 @@
   return navController;
 }
 
-- (void)showView:(UIViewController *)viewController {
-  // if we compile Crash only, then BITHockeyBaseViewController is not included
-  // in the headers and will cause a warning with the modulemap file
-#if HOCKEYSDK_FEATURE_AUTHENTICATOR || HOCKEYSDK_FEATURE_UPDATES || HOCKEYSDK_FEATURE_FEEDBACK
+- (UIViewController *)visibleWindowRootViewController {
   UIViewController *parentViewController = nil;
-    
+  
   if ([[BITHockeyManager sharedHockeyManager].delegate respondsToSelector:@selector(viewControllerForHockeyManager:componentManager:)]) {
     parentViewController = [[BITHockeyManager sharedHockeyManager].delegate viewControllerForHockeyManager:[BITHockeyManager sharedHockeyManager] componentManager:self];
   }
@@ -221,14 +213,6 @@
     parentViewController = parentViewController.presentedViewController;
   }
   
-  // as per documentation this only works if called from within viewWillAppear: or viewDidAppear:
-  // in tests this also worked fine on iOS 6 and 7 but not on iOS 5 so we are still trying this
-  if ([parentViewController isBeingPresented]) {
-    BITHockeyLog(@"WARNING: There is already a view controller being presented onto the parentViewController. Delaying presenting the new view controller by 0.5s.");
-    [self performSelector:@selector(showView:) withObject:viewController afterDelay:0.5];
-    return;
-  }
-  
   // special addition to get rootViewController from three20 which has it's own controller handling
   if (NSClassFromString(@"TTNavigator")) {
 #pragma clang diagnostic push
@@ -240,32 +224,74 @@
 #pragma clang diagnostic pop
   }
   
-  if (_navController != nil) _navController = nil;
+  return parentViewController;
+}
+/* We won't use this for now until we have a more robust solution for displaying UIAlertController
+- (void)showAlertController:(UIViewController *)alertController {
   
-  _navController = [self customNavigationControllerWithRootViewController:viewController presentationStyle:_modalPresentationStyle];
-  
-  if (parentViewController) {
-    _navController.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
+  // always execute this on the main thread
+  dispatch_async(dispatch_get_main_queue(), ^{
+    UIViewController *parentViewController = [self visibleWindowRootViewController];
     
-    // page sheet for the iPad
-    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
-      _navController.modalPresentationStyle = UIModalPresentationFormSheet;
+    // as per documentation this only works if called from within viewWillAppear: or viewDidAppear:
+    // in tests this also worked fine on iOS 6 and 7 but not on iOS 5 so we are still trying this
+    if ([parentViewController isKindOfClass:NSClassFromString(@"UIAlertController")] || [parentViewController isBeingPresented]) {
+      BITHockeyLog(@"WARNING: There is already a view controller being presented onto the parentViewController. Delaying presenting the new view controller by 0.5s.");
+      [self performSelector:@selector(showAlertController:) withObject:alertController afterDelay:0.5];
+      return;
     }
     
-    if ([viewController isKindOfClass:[BITHockeyBaseViewController class]])
-      [(BITHockeyBaseViewController *)viewController setModalAnimated:YES];
-    
-    [parentViewController presentViewController:_navController animated:YES completion:nil];
-  } else {
-    // if not, we add a subview to the window. A bit hacky but should work in most circumstances.
-    // Also, we don't get a nice animation for free, but hey, this is for beta not production users ;)
-    BITHockeyLog(@"INFO: No rootViewController found, using UIWindow-approach: %@", visibleWindow);
-    if ([viewController isKindOfClass:[BITHockeyBaseViewController class]])
-      [(BITHockeyBaseViewController *)viewController setModalAnimated:NO];
-    [visibleWindow addSubview:_navController.view];
-  }
-#endif
+    if (parentViewController) {
+      [parentViewController presentViewController:alertController animated:YES completion:nil];
+    }
+  });
 }
+*/
+
+- (void)showView:(UIViewController *)viewController {
+  // if we compile Crash only, then BITHockeyBaseViewController is not included
+  // in the headers and will cause a warning with the modulemap file
+#if HOCKEYSDK_FEATURE_AUTHENTICATOR || HOCKEYSDK_FEATURE_UPDATES || HOCKEYSDK_FEATURE_FEEDBACK
+    UIViewController *parentViewController = [self visibleWindowRootViewController];
+    
+    // as per documentation this only works if called from within viewWillAppear: or viewDidAppear:
+    // in tests this also worked fine on iOS 6 and 7 but not on iOS 5 so we are still trying this
+    if ([parentViewController isBeingPresented]) {
+      BITHockeyLog(@"WARNING: There is already a view controller being presented onto the parentViewController. Delaying presenting the new view controller by 0.5s.");
+      [self performSelector:@selector(showView:) withObject:viewController afterDelay:0.5];
+      return;
+    }
+    
+    if (_navController != nil) _navController = nil;
+    
+    _navController = [self customNavigationControllerWithRootViewController:viewController presentationStyle:_modalPresentationStyle];
+    
+    if (parentViewController) {
+      _navController.modalTransitionStyle = UIModalTransitionStyleCoverVertical;
+      
+      // page sheet for the iPad
+      if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+        _navController.modalPresentationStyle = UIModalPresentationFormSheet;
+      }
+      
+      if ([viewController isKindOfClass:[BITHockeyBaseViewController class]])
+        [(BITHockeyBaseViewController *)viewController setModalAnimated:YES];
+      
+      [parentViewController presentViewController:_navController animated:YES completion:nil];
+    } else {
+      // if not, we add a subview to the window. A bit hacky but should work in most circumstances.
+      // Also, we don't get a nice animation for free, but hey, this is for beta not production users ;)
+      UIWindow *visibleWindow = [self findVisibleWindow];
+      
+      BITHockeyLog(@"INFO: No rootViewController found, using UIWindow-approach: %@", visibleWindow);
+      if ([viewController isKindOfClass:[BITHockeyBaseViewController class]])
+        [(BITHockeyBaseViewController *)viewController setModalAnimated:NO];
+      [visibleWindow addSubview:_navController.view];
+    }
+#endif /* HOCKEYSDK_FEATURE_AUTHENTICATOR || HOCKEYSDK_FEATURE_UPDATES || HOCKEYSDK_FEATURE_FEEDBACK */
+}
+#endif // HOCKEYSDK_CONFIGURATION_ReleaseCrashOnlyExtensions && HOCKEYSDK_CONFIGURATION_RelaseCrashOnlyWatchOS
+
 
 - (BOOL)addStringValueToKeychain:(NSString *)stringValue forKey:(NSString *)key {
 	if (!key || !stringValue)

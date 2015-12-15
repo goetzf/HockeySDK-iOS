@@ -27,9 +27,12 @@
  */
 
 
-#import "BITAuthenticator.h"
-#import "BITHockeyBaseManagerPrivate.h"
+#import "HockeySDK.h"
+
+#if HOCKEYSDK_FEATURE_AUTHENTICATOR
+
 #import "BITAuthenticationViewController.h"
+
 @class BITHockeyAppClient;
 
 @interface BITAuthenticator ()<BITAuthenticationViewControllerDelegate, UIAlertViewDelegate>
@@ -90,6 +93,14 @@
 
 #pragma mark - Testing
 - (void) storeInstallationIdentifier:(NSString*) identifier withType:(BITAuthenticatorIdentificationType) type;
+- (void)validateWithCompletion:(void (^)(BOOL validated, NSError *))completion sessionSupported:(BOOL)isSessionSupported;
+- (void)authenticationViewController:(UIViewController *)viewController
+       handleAuthenticationWithEmail:(NSString *)email
+                             request:(NSURLRequest *)request
+                 urlSessionSupported:(BOOL)isURLSessionSupported
+                          completion:(void (^)(BOOL, NSError *))completion;
 - (BOOL) needsValidation;
 - (void) authenticate;
 @end
+
+#endif /* HOCKEYSDK_FEATURE_AUTHENTICATOR */

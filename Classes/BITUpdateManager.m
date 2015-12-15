@@ -42,6 +42,10 @@
 #import "BITUpdateViewControllerPrivate.h"
 #import "BITAppVersionMetaInfo.h"
 
+#if HOCKEYSDK_FEATURE_CRASH_REPORTER
+#import "BITCrashManagerPrivate.h"
+#endif
+
 typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
   BITUpdateAlertViewTagDefaultUpdate = 0,
   BITUpdateAlertViewTagNeverEndingAlertView = 1,
@@ -89,11 +93,34 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
   
   // only show error if we enable that
   if (_showFeedback) {
-    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:BITHockeyLocalizedString(@"UpdateError")
-                                                    message:[error localizedDescription]
-                                                   delegate:nil
-                                          cancelButtonTitle:BITHockeyLocalizedString(@"OK") otherButtonTitles:nil];
-    [alert show];
+    /* We won't use this for now until we have a more robust solution for displaying UIAlertController
+    // requires iOS 8
+    id uialertcontrollerClass = NSClassFromString(@"UIAlertController");
+    if (uialertcontrollerClass) {
+      UIAlertController *alertController = [UIAlertController alertControllerWithTitle:BITHockeyLocalizedString(@"UpdateError")
+                                                                               message:[error localizedDescription]
+                                                                        preferredStyle:UIAlertControllerStyleAlert];
+      
+      
+      UIAlertAction *okAction = [UIAlertAction actionWithTitle:BITHockeyLocalizedString(@"HockeyOK")
+                                                         style:UIAlertActionStyleDefault
+                                                       handler:^(UIAlertAction * action) {}];
+      
+      [alertController addAction:okAction];
+      
+      [self showAlertController:alertController];
+    } else {
+     */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+      UIAlertView *alert = [[UIAlertView alloc] initWithTitle:BITHockeyLocalizedString(@"UpdateError")
+                                                      message:[error localizedDescription]
+                                                     delegate:nil
+                                            cancelButtonTitle:BITHockeyLocalizedString(@"HockeyOK")
+                                            otherButtonTitles:nil];
+      [alert show];
+#pragma clang diagnostic pop
+    /*}*/
     _showFeedback = NO;
   }
 }
@@ -113,9 +140,13 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
     // we only care about iOS 8 or later
     if (bit_isPreiOS8Environment()) return;
     
-    if (self.delegate != nil && [self.delegate respondsToSelector:@selector(updateManagerWillExitApp:)]) {
+    if ([self.delegate respondsToSelector:@selector(updateManagerWillExitApp:)]) {
       [self.delegate updateManagerWillExitApp:self];
     }
+    
+#if HOCKEYSDK_FEATURE_CRASH_REPORTER
+    [[BITHockeyManager sharedHockeyManager].crashManager leavingAppSafely];
+#endif
     
     // for now we simply exit the app, later SDK versions might optionally show an alert with localized text
     // describing the user to press the home button to start the update process
@@ -196,7 +227,7 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
 #pragma mark - Expiry
 
 - (BOOL)expiryDateReached {
-  if ([self isAppStoreEnvironment]) return NO;
+  if (self.appEnvironment != BITEnvironmentOther) return NO;
   
   if (_expiryDate) {
     NSDate *currentDate = [NSDate date];
@@ -212,7 +243,7 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
   
   BOOL shouldShowDefaultAlert = YES;
   
-  if (self.delegate != nil && [self.delegate respondsToSelector:@selector(shouldDisplayExpiryAlertForUpdateManager:)]) {
+  if ([self.delegate respondsToSelector:@selector(shouldDisplayExpiryAlertForUpdateManager:)]) {
     shouldShowDefaultAlert = [self.delegate shouldDisplayExpiryAlertForUpdateManager:self];
   }
   
@@ -222,7 +253,7 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
       _blockingScreenMessage = [NSString stringWithFormat:BITHockeyLocalizedString(@"UpdateExpired"), appName];
     [self showBlockingScreen:_blockingScreenMessage image:@"authorize_denied.png"];
 
-    if (self.delegate != nil && [self.delegate respondsToSelector:@selector(didDisplayExpiryAlertForUpdateManager:)]) {
+    if ([self.delegate respondsToSelector:@selector(didDisplayExpiryAlertForUpdateManager:)]) {
       [self.delegate didDisplayExpiryAlertForUpdateManager:self];
     }
     
@@ -283,7 +314,7 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
 }
 
 - (void)stopUsage {
-  if ([self isAppStoreEnvironment]) return;
+  if (self.appEnvironment != BITEnvironmentOther) return;
   if ([self expiryDateReached]) return;
   
   double timeDifference = [[NSDate date] timeIntervalSinceReferenceDate] - [_usageStartTimestamp timeIntervalSinceReferenceDate];
@@ -293,7 +324,7 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
 }
 
 - (void) storeUsageTimeForCurrentVersion:(NSNumber *)usageTime {
-  if ([self isAppStoreEnvironment]) return;
+  if (self.appEnvironment != BITEnvironmentOther) return;
   
   NSMutableData *data = [[NSMutableData alloc] init];
   NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initForWritingWithMutableData:data];
@@ -398,12 +429,15 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
 }
 
 - (void)saveAppCache {
-  if (_companyName)
+  if (_companyName) {
     [[NSUserDefaults standardUserDefaults] setObject:_companyName forKey:kBITUpdateCurrentCompanyName];
-  if (_versionUUID)
+  }
+  if (_versionUUID) {
     [[NSUserDefaults standardUserDefaults] setObject:_versionUUID forKey:kBITUpdateInstalledUUID];
-  if (_versionID)
+  }
+  if (_versionID) {
     [[NSUserDefaults standardUserDefaults] setObject:_versionID forKey:kBITUpdateInstalledVersionID];
+  }
   NSData *data = [NSKeyedArchiver archivedDataWithRootObject:self.appVersions];
   [[NSUserDefaults standardUserDefaults] setObject:data forKey:kBITUpdateArrayOfLastCheck];
   [[NSUserDefaults standardUserDefaults] synchronize];
@@ -484,7 +518,7 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
 #pragma mark - BetaUpdateUI
 
 - (BITUpdateViewController *)hockeyViewController:(BOOL)modal {
-  if ([self isAppStoreEnvironment]) {
+  if (self.appEnvironment != BITEnvironmentOther) {
     NSLog(@"[HockeySDK] This should not be called from an app store build!");
     // return an empty view controller instead
     BITHockeyBaseViewController *blankViewController = [[BITHockeyBaseViewController alloc] initWithModalStyle:modal];
@@ -494,7 +528,7 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
 }
 
 - (void)showUpdateView {
-  if ([self isAppStoreEnvironment]) {
+  if (self.appEnvironment != BITEnvironmentOther) {
     NSLog(@"[HockeySDK] This should not be called from an app store build!");
     return;
   }
@@ -511,37 +545,136 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
   if ([self hasNewerMandatoryVersion] || [self expiryDateReached]) {
     [updateViewController setMandatoryUpdate: YES];
   }
-  [self showView:updateViewController];
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [self showView:updateViewController];
+  });
 }
 
 
 - (void)showCheckForUpdateAlert {
-  if ([self isAppStoreEnvironment]) return;
+  if (self.appEnvironment != BITEnvironmentOther) return;
   if ([self isUpdateManagerDisabled]) return;
   
   if (!_updateAlertShowing) {
+    NSString *title = BITHockeyLocalizedString(@"UpdateAvailable");
+    NSString *message = [NSString stringWithFormat:BITHockeyLocalizedString(@"UpdateAlertMandatoryTextWithAppVersion"), [self.newestAppVersion nameAndVersionString]];
     if ([self hasNewerMandatoryVersion]) {
-      UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:BITHockeyLocalizedString(@"UpdateAvailable")
-                                                           message:[NSString stringWithFormat:BITHockeyLocalizedString(@"UpdateAlertMandatoryTextWithAppVersion"), [self.newestAppVersion nameAndVersionString]]
-                                                          delegate:self
-                                                 cancelButtonTitle:nil
-                                                 otherButtonTitles:BITHockeyLocalizedString(@"UpdateShow"), BITHockeyLocalizedString(@"UpdateInstall"), nil
-                                 ];
-      [alertView setTag:BITUpdateAlertViewTagMandatoryUpdate];
-      [alertView show];
+      /* We won't use this for now until we have a more robust solution for displaying UIAlertController
+      // requires iOS 8
+      id uialertcontrollerClass = NSClassFromString(@"UIAlertController");
+      if (uialertcontrollerClass) {
+        __weak typeof(self) weakSelf = self;
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title
+                                                                                 message:message
+                                                                          preferredStyle:UIAlertControllerStyleAlert];
+        
+        
+        UIAlertAction *showAction = [UIAlertAction actionWithTitle:BITHockeyLocalizedString(@"UpdateShow")
+                                                             style:UIAlertActionStyleDefault
+                                                           handler:^(UIAlertAction * action) {
+                                                             typeof(self) strongSelf = weakSelf;
+                                                             _updateAlertShowing = NO;
+                                                             if (strongSelf.blockingView) {
+                                                               [strongSelf.blockingView removeFromSuperview];
+                                                             }
+                                                             [strongSelf showUpdateView];
+                                                           }];
+        
+        [alertController addAction:showAction];
+        
+        UIAlertAction *installAction = [UIAlertAction actionWithTitle:BITHockeyLocalizedString(@"UpdateInstall")
+                                                                style:UIAlertActionStyleDefault
+                                                              handler:^(UIAlertAction * action) {
+                                                                typeof(self) strongSelf = weakSelf;
+                                                                _updateAlertShowing = NO;
+                                                                  (void)[strongSelf initiateAppDownload];
+                                                              }];
+        
+        [alertController addAction:installAction];
+      
+        [self showAlertController:alertController];
+      } else {
+       */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:title
+                                                            message:message
+                                                           delegate:self
+                                                  cancelButtonTitle:nil
+                                                  otherButtonTitles:BITHockeyLocalizedString(@"UpdateShow"), BITHockeyLocalizedString(@"UpdateInstall"), nil
+                                  ];
+        [alertView setTag:BITUpdateAlertViewTagMandatoryUpdate];
+        [alertView show];
+#pragma clang diagnostic pop
+      /*}*/
       _updateAlertShowing = YES;
     } else {
-      UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:BITHockeyLocalizedString(@"UpdateAvailable")
-                                                           message:[NSString stringWithFormat:BITHockeyLocalizedString(@"UpdateAlertTextWithAppVersion"), [self.newestAppVersion nameAndVersionString]]
-                                                          delegate:self
-                                                 cancelButtonTitle:BITHockeyLocalizedString(@"UpdateIgnore")
-                                                 otherButtonTitles:BITHockeyLocalizedString(@"UpdateShow"), nil
-                                 ];
-      if (self.isShowingDirectInstallOption) {
-        [alertView addButtonWithTitle:BITHockeyLocalizedString(@"UpdateInstall")];
-      }
-      [alertView setTag:BITUpdateAlertViewTagDefaultUpdate];
-      [alertView show];
+      message = [NSString stringWithFormat:BITHockeyLocalizedString(@"UpdateAlertTextWithAppVersion"), [self.newestAppVersion nameAndVersionString]];
+      /* We won't use this for now until we have a more robust solution for displaying UIAlertController
+      // requires iOS 8
+      id uialertcontrollerClass = NSClassFromString(@"UIAlertController");
+      if (uialertcontrollerClass) {
+        __weak typeof(self) weakSelf = self;
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title
+                                                                                 message:message
+                                                                          preferredStyle:UIAlertControllerStyleAlert];
+        
+        
+        UIAlertAction *ignoreAction = [UIAlertAction actionWithTitle:BITHockeyLocalizedString(@"UpdateIgnore")
+                                                               style:UIAlertActionStyleCancel
+                                                             handler:^(UIAlertAction * action) {
+                                                               typeof(self) strongSelf = weakSelf;
+                                                               _updateAlertShowing = NO;
+                                                               if ([strongSelf expiryDateReached] && !strongSelf.blockingView) {
+                                                                 [strongSelf alertFallback:_blockingScreenMessage];
+                                                               }
+                                                         }];
+        
+        [alertController addAction:ignoreAction];
+        
+        UIAlertAction *showAction = [UIAlertAction actionWithTitle:BITHockeyLocalizedString(@"UpdateShow")
+                                                             style:UIAlertActionStyleDefault
+                                                           handler:^(UIAlertAction * action) {
+                                                             typeof(self) strongSelf = weakSelf;
+                                                             _updateAlertShowing = NO;
+                                                             if (strongSelf.blockingView) {
+                                                               [strongSelf.blockingView removeFromSuperview];
+                                                             }
+                                                             [strongSelf showUpdateView];
+                                                           }];
+        
+        [alertController addAction:showAction];
+        
+        if (self.isShowingDirectInstallOption) {
+          UIAlertAction *installAction = [UIAlertAction actionWithTitle:BITHockeyLocalizedString(@"UpdateInstall")
+                                                                  style:UIAlertActionStyleDefault
+                                                                handler:^(UIAlertAction * action) {
+                                                                  typeof(self) strongSelf = weakSelf;
+                                                                  _updateAlertShowing = NO;
+                                                                  (void)[strongSelf initiateAppDownload];
+                                                                }];
+          
+          [alertController addAction:installAction];
+        }
+        
+        [self showAlertController:alertController ];
+      } else {
+       */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:title
+                                                            message:message
+                                                           delegate:self
+                                                  cancelButtonTitle:BITHockeyLocalizedString(@"UpdateIgnore")
+                                                  otherButtonTitles:BITHockeyLocalizedString(@"UpdateShow"), nil
+                                  ];
+        if (self.isShowingDirectInstallOption) {
+          [alertView addButtonWithTitle:BITHockeyLocalizedString(@"UpdateInstall")];
+        }
+        [alertView setTag:BITUpdateAlertViewTagDefaultUpdate];
+        [alertView show];
+#pragma clang diagnostic pop
+      /*}*/
       _updateAlertShowing = YES;
     }
   }
@@ -591,7 +724,7 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
     
     UILabel *label = [[UILabel alloc] initWithFrame:frame];
     label.text = message;
-    label.textAlignment = kBITTextLabelAlignmentCenter;
+    label.textAlignment = NSTextAlignmentCenter;
     label.numberOfLines = 3;
     label.adjustsFontSizeToFitWidth = YES;
     label.backgroundColor = [UIColor clearColor];
@@ -615,19 +748,55 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
 
 // nag the user with neverending alerts if we cannot find out the window for presenting the covering sheet
 - (void)alertFallback:(NSString *)message {
-  UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:nil
-                                                      message:message
-                                                     delegate:self
-                                            cancelButtonTitle:BITHockeyLocalizedString(@"HockeyOK")
-                                            otherButtonTitles:nil
-                            ];
-  
-  if (!self.disableUpdateCheckOptionWhenExpired && [message isEqualToString:_blockingScreenMessage]) {
-    [alertView addButtonWithTitle:BITHockeyLocalizedString(@"UpdateButtonCheck")];
-  }
-  
-  [alertView setTag:BITUpdateAlertViewTagNeverEndingAlertView];
-  [alertView show];
+  /* We won't use this for now until we have a more robust solution for displaying UIAlertController
+  // requires iOS 8
+  id uialertcontrollerClass = NSClassFromString(@"UIAlertController");
+  if (uialertcontrollerClass) {
+    __weak typeof(self) weakSelf = self;
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:nil
+                                                                             message:message
+                                                                      preferredStyle:UIAlertControllerStyleAlert];
+    
+    
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:BITHockeyLocalizedString(@"HockeyOK")
+                                                       style:UIAlertActionStyleDefault
+                                                     handler:^(UIAlertAction * action) {
+                                                       typeof(self) strongSelf = weakSelf;
+                                                       [strongSelf alertFallback:_blockingScreenMessage];
+                                                     }];
+    
+    [alertController addAction:okAction];
+    
+    if (!self.disableUpdateCheckOptionWhenExpired && [message isEqualToString:_blockingScreenMessage]) {
+      UIAlertAction *checkAction = [UIAlertAction actionWithTitle:BITHockeyLocalizedString(@"UpdateButtonCheck")
+                                                            style:UIAlertActionStyleDefault
+                                                          handler:^(UIAlertAction * action) {
+                                                            typeof(self) strongSelf = weakSelf;
+                                                            [strongSelf checkForUpdateForExpiredVersion];
+                                                          }];
+      
+      [alertController addAction:checkAction];
+    }
+    
+    [self showAlertController:alertController];
+  } else {
+   */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:nil
+                                                        message:message
+                                                       delegate:self
+                                              cancelButtonTitle:BITHockeyLocalizedString(@"HockeyOK")
+                                              otherButtonTitles:nil
+                              ];
+    
+    if (!self.disableUpdateCheckOptionWhenExpired && [message isEqualToString:_blockingScreenMessage]) {
+      [alertView addButtonWithTitle:BITHockeyLocalizedString(@"UpdateButtonCheck")];
+    }
+    
+    [alertView setTag:BITUpdateAlertViewTagNeverEndingAlertView];
+    [alertView show];
+  /*}*/
 }
 
 #pragma mark - RequestComments
@@ -658,7 +827,7 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
 }
 
 - (void)checkForUpdate {
-  if (![self isAppStoreEnvironment] && ![self isUpdateManagerDisabled]) {
+  if ((self.appEnvironment == BITEnvironmentOther) && ![self isUpdateManagerDisabled]) {
     if ([self expiryDateReached]) return;
     if (![self installationIdentified]) return;
     
@@ -671,7 +840,7 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
 }
 
 - (void)checkForUpdateShowFeedback:(BOOL)feedback {
-  if ([self isAppStoreEnvironment]) return;
+  if (self.appEnvironment != BITEnvironmentOther) return;
   if (self.isCheckInProgress) return;
   
   _showFeedback = feedback;
@@ -684,9 +853,8 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
     return;
   }
   
-  NSMutableString *parameter = [NSMutableString stringWithFormat:@"api/2/apps/%@?format=json&extended=true%@&sdk=%@&sdk_version=%@&uuid=%@",
+  NSMutableString *parameter = [NSMutableString stringWithFormat:@"api/2/apps/%@?format=json&extended=true&sdk=%@&sdk_version=%@&uuid=%@",
                                 bit_URLEncodedString([self encodedAppIdentifier]),
-                                ([self isAppStoreEnvironment] ? @"&udid=appstore" : @""),
                                 BITHOCKEY_NAME,
                                 BITHOCKEY_VERSION,
                                 _uuid];
@@ -720,26 +888,70 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
   [request setValue:@"Hockey/iOS" forHTTPHeaderField:@"User-Agent"];
   [request setValue:@"gzip" forHTTPHeaderField:@"Accept-Encoding"];
   
-  self.urlConnection = [[NSURLConnection alloc] initWithRequest:request delegate:self];
-  if (!_urlConnection) {
-    self.checkInProgress = NO;
-    [self reportError:[NSError errorWithDomain:kBITUpdateErrorDomain
-                                          code:BITUpdateAPIClientCannotCreateConnection
-                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Url Connection could not be created.", NSLocalizedDescriptionKey, nil]]];
+  id nsurlsessionClass = NSClassFromString(@"NSURLSessionDataTask");
+  if (nsurlsessionClass && !bit_isRunningInAppExtension()) {
+    NSURLSessionConfiguration *sessionConfiguration = [NSURLSessionConfiguration defaultSessionConfiguration];
+    NSURLSession *session = [NSURLSession sessionWithConfiguration:sessionConfiguration delegate:(id<NSURLSessionDelegate>)self delegateQueue:nil];
+    
+    NSURLSessionDataTask *sessionTask = [session dataTaskWithRequest:request];
+    if (!sessionTask) {
+      self.checkInProgress = NO;
+      [self reportError:[NSError errorWithDomain:kBITUpdateErrorDomain
+                                            code:BITUpdateAPIClientCannotCreateConnection
+                                        userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Url Connection could not be created.", NSLocalizedDescriptionKey, nil]]];
+    }else{
+      [sessionTask resume];
+    }
+  }else{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    self.urlConnection = [[NSURLConnection alloc] initWithRequest:request delegate:self];
+#pragma clang diagnostic pop
+    if (!self.urlConnection) {
+      self.checkInProgress = NO;
+      [self reportError:[NSError errorWithDomain:kBITUpdateErrorDomain
+                                            code:BITUpdateAPIClientCannotCreateConnection
+                                        userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Url Connection could not be created.", NSLocalizedDescriptionKey, nil]]];
+    }
   }
 }
 
 - (BOOL)initiateAppDownload {
-  if ([self isAppStoreEnvironment]) return NO;
+  if (self.appEnvironment != BITEnvironmentOther) return NO;
   
   if (!self.isUpdateAvailable) {
     BITHockeyLog(@"WARNING: No update available. Aborting.");
     return NO;
   }
   
-#if TARGET_IPHONE_SIMULATOR
-  UIAlertView *alert = [[UIAlertView alloc] initWithTitle:BITHockeyLocalizedString(@"UpdateWarning") message:BITHockeyLocalizedString(@"UpdateSimulatorMessage") delegate:nil cancelButtonTitle:BITHockeyLocalizedString(@"HockeyOK") otherButtonTitles:nil];
-  [alert show];
+#if TARGET_OS_SIMULATOR
+  /* We won't use this for now until we have a more robust solution for displaying UIAlertController
+  // requires iOS 8
+  id uialertcontrollerClass = NSClassFromString(@"UIAlertController");
+  if (uialertcontrollerClass) {
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:BITHockeyLocalizedString(@"UpdateWarning")
+                                                                             message:BITHockeyLocalizedString(@"UpdateSimulatorMessage")
+                                                                      preferredStyle:UIAlertControllerStyleAlert];
+    
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:BITHockeyLocalizedString(@"HockeyOK")
+                                                       style:UIAlertActionStyleDefault
+                                                     handler:^(UIAlertAction * action) {}];
+    
+    [alertController addAction:okAction];
+    
+    [self showAlertController:alertController];
+  } else {
+   */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:BITHockeyLocalizedString(@"UpdateWarning")
+                                                    message:BITHockeyLocalizedString(@"UpdateSimulatorMessage")
+                                                   delegate:nil
+                                          cancelButtonTitle:BITHockeyLocalizedString(@"HockeyOK")
+                                          otherButtonTitles:nil];
+    [alert show];
+#pragma clang diagnostic pop
+  /*}*/
   return NO;
 
 #else
@@ -756,7 +968,7 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
   NSString *iOSUpdateURL = [NSString stringWithFormat:@"itms-services://?action=download-manifest&url=%@", bit_URLEncodedString(hockeyAPIURL)];
 
   // Notify delegate of update intent before placing the call
-  if (self.delegate != nil && [self.delegate respondsToSelector:@selector(willStartDownloadAndUpdate:)]) {
+  if ([self.delegate respondsToSelector:@selector(willStartDownloadAndUpdate:)]) {
     [self.delegate willStartDownloadAndUpdate:self];
   }
 
@@ -768,18 +980,18 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
   
   return success;
 
-#endif
+#endif /* TARGET_OS_SIMULATOR */
 }
 
 
 // begin the startup process
 - (void)startManager {
-  if (![self isAppStoreEnvironment]) {
+  if (self.appEnvironment == BITEnvironmentOther) {
     if ([self isUpdateManagerDisabled]) return;
     
     BITHockeyLog(@"INFO: Starting UpdateManager");
     
-    if (self.delegate != nil && [self.delegate respondsToSelector:@selector(updateManagerShouldSendUsageData:)]) {
+    if ([self.delegate respondsToSelector:@selector(updateManagerShouldSendUsageData:)]) {
       _sendUsageData = [self.delegate updateManagerShouldSendUsageData:self];
     }
     
@@ -795,6 +1007,157 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
   [self registerObservers];
 }
 
+#pragma mark - Handle responses
+
+- (void)handleError:(NSError *)error {
+  self.receivedData = nil;
+  self.urlConnection = nil;
+  self.checkInProgress = NO;
+  if ([self expiryDateReached]) {
+    if (!self.blockingView) {
+      [self alertFallback:_blockingScreenMessage];
+    }
+  } else {
+    [self reportError:error];
+  }
+}
+
+- (void)finishLoading {
+  {
+    self.checkInProgress = NO;
+    
+    if ([self.receivedData length]) {
+      NSString *responseString = [[NSString alloc] initWithBytes:[_receivedData bytes] length:[_receivedData length] encoding: NSUTF8StringEncoding];
+      BITHockeyLog(@"INFO: Received API response: %@", responseString);
+      
+      if (!responseString || ![responseString dataUsingEncoding:NSUTF8StringEncoding]) {
+        self.receivedData = nil;
+        self.urlConnection = nil;
+        return;
+      }
+      
+      NSError *error = nil;
+      NSDictionary *json = (NSDictionary *)[NSJSONSerialization JSONObjectWithData:[responseString dataUsingEncoding:NSUTF8StringEncoding] options:0 error:&error];
+      
+      self.companyName = (([[json valueForKey:@"company"] isKindOfClass:[NSString class]]) ? [json valueForKey:@"company"] : nil);
+      
+      if (self.appEnvironment == BITEnvironmentOther) {
+        NSArray *feedArray = (NSArray *)[json valueForKey:@"versions"];
+        
+        // remember that we just checked the server
+        self.lastCheck = [NSDate date];
+        
+        // server returned empty response?
+        if (![feedArray count]) {
+          BITHockeyLog(@"WARNING: No versions available for download on HockeyApp.");
+          self.receivedData = nil;
+          self.urlConnection = nil;
+          return;
+        } else {
+          _lastCheckFailed = NO;
+        }
+        
+        
+        NSString *currentAppCacheVersion = [[self newestAppVersion].version copy];
+        
+        // clear cache and reload with new data
+        NSMutableArray *tmpAppVersions = [NSMutableArray arrayWithCapacity:[feedArray count]];
+        for (NSDictionary *dict in feedArray) {
+          BITAppVersionMetaInfo *appVersionMetaInfo = [BITAppVersionMetaInfo appVersionMetaInfoFromDict:dict];
+          if ([appVersionMetaInfo isValid]) {
+            // check if minOSVersion is set and this device qualifies
+            BOOL deviceOSVersionQualifies = YES;
+            if ([appVersionMetaInfo minOSVersion] && ![[appVersionMetaInfo minOSVersion] isKindOfClass:[NSNull class]]) {
+              NSComparisonResult comparisonResult = bit_versionCompare(appVersionMetaInfo.minOSVersion, [[UIDevice currentDevice] systemVersion]);
+              if (comparisonResult == NSOrderedDescending) {
+                deviceOSVersionQualifies = NO;
+              }
+            }
+            
+            if (deviceOSVersionQualifies)
+              [tmpAppVersions addObject:appVersionMetaInfo];
+          } else {
+            [self reportError:[NSError errorWithDomain:kBITUpdateErrorDomain
+                                                  code:BITUpdateAPIServerReturnedInvalidData
+                                              userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Invalid data received from server.", NSLocalizedDescriptionKey, nil]]];
+          }
+        }
+        // only set if different!
+        if (![self.appVersions isEqualToArray:tmpAppVersions]) {
+          self.appVersions = [tmpAppVersions copy];
+        }
+        [self saveAppCache];
+        
+        [self checkUpdateAvailable];
+        BOOL newVersionDiffersFromCachedVersion = ![self.newestAppVersion.version isEqualToString:currentAppCacheVersion];
+        
+        // show alert if we are on the latest & greatest
+        if (_showFeedback && !self.isUpdateAvailable) {
+          // use currentVersionString, as version still may differ (e.g. server: 1.2, client: 1.3)
+          NSString *versionString = [self currentAppVersion];
+          NSString *shortVersionString = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+          shortVersionString = shortVersionString ? [NSString stringWithFormat:@"%@ ", shortVersionString] : @"";
+          versionString = [shortVersionString length] ? [NSString stringWithFormat:@"(%@)", versionString] : versionString;
+          NSString *currentVersionString = [NSString stringWithFormat:@"%@ %@ %@%@", self.newestAppVersion.name, BITHockeyLocalizedString(@"UpdateVersion"), shortVersionString, versionString];
+          NSString *alertMsg = [NSString stringWithFormat:BITHockeyLocalizedString(@"UpdateNoUpdateAvailableMessage"), currentVersionString];
+          /* We won't use this for now until we have a more robust solution for displaying UIAlertController
+          // requires iOS 8
+          id uialertcontrollerClass = NSClassFromString(@"UIAlertController");
+          if (uialertcontrollerClass) {
+            __weak typeof(self) weakSelf = self;
+            UIAlertController *alertController = [UIAlertController alertControllerWithTitle:BITHockeyLocalizedString(@"UpdateNoUpdateAvailableTitle")
+                                                                                     message:alertMsg
+                                                                              preferredStyle:UIAlertControllerStyleAlert];
+            
+            
+            UIAlertAction *okAction = [UIAlertAction actionWithTitle:BITHockeyLocalizedString(@"HockeyOK")
+                                                               style:UIAlertActionStyleDefault
+                                                             handler:^(UIAlertAction * action) {
+                                                               typeof(self) strongSelf = weakSelf;
+                                                               _updateAlertShowing = NO;
+                                                               if ([strongSelf expiryDateReached] && !strongSelf.blockingView) {
+                                                                 [strongSelf alertFallback:_blockingScreenMessage];
+                                                               }
+                                                             }];
+            
+            [alertController addAction:okAction];
+            
+            [self showAlertController:alertController];
+          } else {
+           */
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+            UIAlertView *alert = [[UIAlertView alloc] initWithTitle:BITHockeyLocalizedString(@"UpdateNoUpdateAvailableTitle")
+                                                            message:alertMsg
+                                                           delegate:nil
+                                                  cancelButtonTitle:BITHockeyLocalizedString(@"HockeyOK")
+                                                  otherButtonTitles:nil];
+            [alert show];
+#pragma clang diagnostic pop
+          /*}*/
+        }
+        
+        if (self.isUpdateAvailable && (self.alwaysShowUpdateReminder || newVersionDiffersFromCachedVersion || [self hasNewerMandatoryVersion])) {
+          if (_updateAvailable && !_currentHockeyViewController) {
+            [self showCheckForUpdateAlert];
+          }
+        }
+        _showFeedback = NO;
+      }
+    } else if (![self expiryDateReached]) {
+      [self reportError:[NSError errorWithDomain:kBITUpdateErrorDomain
+                                            code:BITUpdateAPIServerReturnedEmptyResponse
+                                        userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Server returned an empty response.", NSLocalizedDescriptionKey, nil]]];
+    }
+    
+    if (!_updateAlertShowing && [self expiryDateReached] && !self.blockingView) {
+      [self alertFallback:_blockingScreenMessage];
+    }
+    
+    self.receivedData = nil;
+    self.urlConnection = nil;
+  }
+}
 
 #pragma mark - NSURLRequest
 
@@ -805,6 +1168,7 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
   }
   return newRequest;
 }
+
 
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
   if ([response respondsToSelector:@selector(statusCode)]) {
@@ -828,123 +1192,57 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
 }
 
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
-  self.receivedData = nil;
-  self.urlConnection = nil;
-  self.checkInProgress = NO;
-  if ([self expiryDateReached]) {
-    if (!self.blockingView) {
-      [self alertFallback:_blockingScreenMessage];
-    }
-  } else {
-    [self reportError:error];
-  }
+  [self handleError:error];
 }
 
 // api call returned, parsing
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
-  self.checkInProgress = NO;
+  [self finishLoading];
+}
+
+#pragma mark - NSURLSession
+
+- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
   
-  if ([self.receivedData length]) {
-    NSString *responseString = [[NSString alloc] initWithBytes:[_receivedData bytes] length:[_receivedData length] encoding: NSUTF8StringEncoding];
-    BITHockeyLog(@"INFO: Received API response: %@", responseString);
-    
-    if (!responseString || ![responseString dataUsingEncoding:NSUTF8StringEncoding]) {
-      self.receivedData = nil;
-      self.urlConnection = nil;
+  dispatch_async(dispatch_get_main_queue(), ^{
+    if(error){
+      [self handleError:error];
+    }else{
+      [self finishLoading];
+    }
+  });
+}
+
+- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveData:(NSData *)data {
+  [_receivedData appendData:data];
+}
+
+- (void)URLSession:(NSURLSession *)session dataTask:(NSURLSessionDataTask *)dataTask didReceiveResponse:(NSURLResponse *)response completionHandler:(void (^)(NSURLSessionResponseDisposition disposition))completionHandler {
+  
+  if ([response respondsToSelector:@selector(statusCode)]) {
+    NSInteger statusCode = [((NSHTTPURLResponse *)response) statusCode];
+    if (statusCode == 404) {
+      [dataTask cancel];
+      NSString *errorStr = [NSString stringWithFormat:@"Hockey API received HTTP Status Code %ld", (long)statusCode];
+      [self reportError:[NSError errorWithDomain:kBITUpdateErrorDomain
+                                            code:BITUpdateAPIServerReturnedInvalidStatus
+                                        userInfo:[NSDictionary dictionaryWithObjectsAndKeys:errorStr, NSLocalizedDescriptionKey, nil]]];
+      if (completionHandler) { completionHandler(NSURLSessionResponseCancel); }
       return;
     }
-    
-    NSError *error = nil;
-    NSDictionary *json = (NSDictionary *)[NSJSONSerialization JSONObjectWithData:[responseString dataUsingEncoding:NSUTF8StringEncoding] options:0 error:&error];
-    
-    self.companyName = (([[json valueForKey:@"company"] isKindOfClass:[NSString class]]) ? [json valueForKey:@"company"] : nil);
-    
-    if (![self isAppStoreEnvironment]) {
-      NSArray *feedArray = (NSArray *)[json valueForKey:@"versions"];
-      
-      // remember that we just checked the server
-      self.lastCheck = [NSDate date];
-      
-      // server returned empty response?
-      if (![feedArray count]) {
-        BITHockeyLog(@"WARNING: No versions available for download on HockeyApp.");
-        self.receivedData = nil;
-        self.urlConnection = nil;
-        return;
-      } else {
-        _lastCheckFailed = NO;
-      }
-      
-      
-      NSString *currentAppCacheVersion = [[self newestAppVersion].version copy];
-      
-      // clear cache and reload with new data
-      NSMutableArray *tmpAppVersions = [NSMutableArray arrayWithCapacity:[feedArray count]];
-      for (NSDictionary *dict in feedArray) {
-        BITAppVersionMetaInfo *appVersionMetaInfo = [BITAppVersionMetaInfo appVersionMetaInfoFromDict:dict];
-        if ([appVersionMetaInfo isValid]) {
-          // check if minOSVersion is set and this device qualifies
-          BOOL deviceOSVersionQualifies = YES;
-          if ([appVersionMetaInfo minOSVersion] && ![[appVersionMetaInfo minOSVersion] isKindOfClass:[NSNull class]]) {
-            NSComparisonResult comparisonResult = bit_versionCompare(appVersionMetaInfo.minOSVersion, [[UIDevice currentDevice] systemVersion]);
-            if (comparisonResult == NSOrderedDescending) {
-              deviceOSVersionQualifies = NO;
-            }
-          }
-          
-          if (deviceOSVersionQualifies)
-            [tmpAppVersions addObject:appVersionMetaInfo];
-        } else {
-          [self reportError:[NSError errorWithDomain:kBITUpdateErrorDomain
-                                                code:BITUpdateAPIServerReturnedInvalidData
-                                            userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Invalid data received from server.", NSLocalizedDescriptionKey, nil]]];
-        }
-      }
-      // only set if different!
-      if (![self.appVersions isEqualToArray:tmpAppVersions]) {
-        self.appVersions = [tmpAppVersions copy];
-      }
-      [self saveAppCache];
-      
-      [self checkUpdateAvailable];
-      BOOL newVersionDiffersFromCachedVersion = ![self.newestAppVersion.version isEqualToString:currentAppCacheVersion];
-      
-      // show alert if we are on the latest & greatest
-      if (_showFeedback && !self.isUpdateAvailable) {
-        // use currentVersionString, as version still may differ (e.g. server: 1.2, client: 1.3)
-        NSString *versionString = [self currentAppVersion];
-        NSString *shortVersionString = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
-        shortVersionString = shortVersionString ? [NSString stringWithFormat:@"%@ ", shortVersionString] : @"";
-        versionString = [shortVersionString length] ? [NSString stringWithFormat:@"(%@)", versionString] : versionString;
-        NSString *currentVersionString = [NSString stringWithFormat:@"%@ %@ %@%@", self.newestAppVersion.name, BITHockeyLocalizedString(@"UpdateVersion"), shortVersionString, versionString];
-        NSString *alertMsg = [NSString stringWithFormat:BITHockeyLocalizedString(@"UpdateNoUpdateAvailableMessage"), currentVersionString];
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:BITHockeyLocalizedString(@"UpdateNoUpdateAvailableTitle")
-                                                        message:alertMsg
-                                                       delegate:nil
-                                              cancelButtonTitle:BITHockeyLocalizedString(@"HockeyOK")
-                                              otherButtonTitles:nil];
-        [alert show];
-      }
-      
-      if (self.isUpdateAvailable && (self.alwaysShowUpdateReminder || newVersionDiffersFromCachedVersion || [self hasNewerMandatoryVersion])) {
-        if (_updateAvailable && !_currentHockeyViewController) {
-          [self showCheckForUpdateAlert];
-        }
-      }
-      _showFeedback = NO;
-    }
-  } else if (![self expiryDateReached]) {
-    [self reportError:[NSError errorWithDomain:kBITUpdateErrorDomain
-                                          code:BITUpdateAPIServerReturnedEmptyResponse
-                                      userInfo:[NSDictionary dictionaryWithObjectsAndKeys:@"Server returned an empty response.", NSLocalizedDescriptionKey, nil]]];
+    if (completionHandler) { completionHandler(NSURLSessionResponseAllow);}
   }
   
-  if (!_updateAlertShowing && [self expiryDateReached] && !self.blockingView) {
-    [self alertFallback:_blockingScreenMessage];
+  self.receivedData = [NSMutableData data];
+  [_receivedData setLength:0];
+}
+
+- (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task willPerformHTTPRedirection:(NSHTTPURLResponse *)response newRequest:(NSURLRequest *)request completionHandler:(void (^)(NSURLRequest *))completionHandler {
+  NSURLRequest *newRequest = request;
+  if (response) {
+    newRequest = nil;
   }
-    
-  self.receivedData = nil;
-  self.urlConnection = nil;
+  if (completionHandler) { completionHandler(newRequest); }
 }
 
 - (BOOL)hasNewerMandatoryVersion {
@@ -962,7 +1260,6 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
   
   return result;
 }
-
 
 #pragma mark - Properties
 
@@ -1046,6 +1343,8 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
 
 #pragma mark - UIAlertViewDelegate
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 // invoke the selected action from the action sheet for a location element
 - (void)alertView:(UIAlertView *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex {
   if ([alertView tag] == BITUpdateAlertViewTagNeverEndingAlertView) {
@@ -1073,6 +1372,7 @@ typedef NS_ENUM(NSInteger, BITUpdateAlertViewTag) {
     }
   }
 }
+#pragma clang diagnostic pop
 
 @end
 
