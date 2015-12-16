@@ -307,7 +307,7 @@ BITEnvironment bit_currentAppEnvironment(void) {
   }
   
   if (bit_isAppStoreReceiptSandbox()) {
-    return BITEnvironmentTestFlight;
+    return BITEnvironmentOther;
   }
   
   return BITEnvironmentAppStore;
