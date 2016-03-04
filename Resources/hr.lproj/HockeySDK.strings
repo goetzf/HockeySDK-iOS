@@ -262,6 +262,8 @@
 /* Replacement for app name if it could not be detected */
 "HockeyCrashReportAppNamePlaceholder" = "The app";
 
+/* Description label shown at the bottom of the report text view. The first placeholder is replaced by the device (e.g. iPhone 6s), the second placeholder is replaced by the iOS version (e.g. iOS 9.3). */
+"HockeyCrashReportDeviceInfo" = "%@, iOS %@";
 
 /* Authenticator */
 

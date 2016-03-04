@@ -159,6 +159,7 @@
                     <simulatedNavigationBarMetrics key="simulatedTopBarMetrics" translucent="NO" prompted="NO"/>
                     <nil key="simulatedBottomBarMetrics"/>
                     <connections>
+                        <outlet property="deviceInfoLabel" destination="155-rp-U3N" id="9Uc-sH-hWV"/>
                         <outlet property="emailTextField" destination="ac9-QS-9mn" id="HBP-kQ-aUT"/>
                         <outlet property="headerLabel" destination="YUa-f3-pKm" id="ihn-HK-Zau"/>
                         <outlet property="nameTextField" destination="JaN-rn-0Y4" id="Wqm-n9-taK"/>

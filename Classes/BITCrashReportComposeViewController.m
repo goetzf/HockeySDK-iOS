@@ -14,6 +14,8 @@
 #import "BITHockeyManager.h"
 #import "HockeySDKPrivate.h"
 
+#import "BITDeviceHardware.h"
+
 
 
 @interface BITCrashReportComposeViewController ()
@@ -29,6 +31,8 @@
 
 @property (nonatomic) IBOutlet UILabel *problemDescriptionPlaceholder;
 @property (nonatomic) IBOutlet UITextView *problemDescriptionTextView;
+
+@property (nonatomic) IBOutlet UILabel *deviceInfoLabel;
 
 @end
 
@@ -52,6 +56,8 @@
     self.headerLabel.text = [NSString stringWithFormat:BITHockeyLocalizedString(@"HockeyCrashReportDescription"), appName, companyName];
   else
     self.headerLabel.text = [NSString stringWithFormat:BITHockeyLocalizedString(@"HockeyCrashReportShortDescription"), appName];
+  
+  self.deviceInfoLabel.text = [NSString stringWithFormat:BITHockeyLocalizedString(@"HockeyCrashReportDeviceInfo"), BITDeviceHardware.platformString, NSProcessInfo.processInfo.operatingSystemVersionString];
   
   [self setUpUserFields];
   
