@@ -69,9 +69,9 @@
     [self.problemDescriptionTextView becomeFirstResponder];
 }
 
-- (void)viewDidLayoutSubviews
+- (void)viewWillLayoutSubviews
 {
-  [super viewDidLayoutSubviews];
+  [super viewWillLayoutSubviews];
   
   // Check if header view height has changed or not, then update as needed
   if (self.tableView.tableHeaderView && [self updateHeaderViewHeightIfNeeded]) {
