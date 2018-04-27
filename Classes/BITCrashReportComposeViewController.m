@@ -122,7 +122,7 @@
   metaData.userID = BITHockeyManager.sharedHockeyManager.userID;
   metaData.userName = self.nameTextField.text;
   metaData.userEmail = self.emailTextField.text;
-  metaData.userDescription = self.problemDescriptionTextView.text;
+  metaData.userProvidedDescription = self.problemDescriptionTextView.text;
   
   // Submit
   [self.delegate crashReportComposeViewController:self didComposeWithMetaData:metaData];
