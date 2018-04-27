@@ -19,10 +19,9 @@
 
 
 @interface BITCrashReportComposeViewController ()
-{
-  NSString *_userName;
-  NSString *_userEmail;
-}
+
+@property(nonatomic) NSString *userName;
+@property(nonatomic) NSString *userEmail;
 
 @property (nonatomic) IBOutlet UILabel *headerLabel;
 
@@ -102,8 +101,8 @@
 
 - (void)prepareWithUserName:(NSString *)userName userEmail:(NSString *)userEmail
 {
-  _userName = userName;
-  _userEmail = userEmail;
+  self.userName = userName;
+  self.userEmail = userEmail;
   
   if (self.isViewLoaded)
     [self setUpUserFields];
@@ -111,8 +110,8 @@
 
 - (void)setUpUserFields
 {
-  self.nameTextField.text = _userName;
-  self.emailTextField.text = _userEmail;
+  self.nameTextField.text = self.userName;
+  self.emailTextField.text = self.userEmail;
 }
 
 #pragma mark - Actions
