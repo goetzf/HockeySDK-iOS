@@ -116,7 +116,7 @@
 
 #pragma mark - Actions
 
-- (IBAction)sendReport:(id)sender {
+- (IBAction)sendReport:(id) __unused sender {
   // Create meta data
   BITCrashMetaData *metaData = [BITCrashMetaData new];
   metaData.userID = BITHockeyManager.sharedHockeyManager.userID;
@@ -128,7 +128,7 @@
   [self.delegate crashReportComposeViewController:self didComposeWithMetaData:metaData];
 }
 
-- (IBAction)dismissReport:(id)sender {
+- (IBAction)dismissReport:(id) __unused sender {
   [self.delegate crashReportComposeViewControllerDidCancel:self];
 }
 
