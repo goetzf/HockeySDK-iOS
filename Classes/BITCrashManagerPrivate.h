@@ -70,12 +70,12 @@
 
 @property (nonatomic, copy, setter = setAlertViewHandler:) BITCustomAlertViewHandler alertViewHandler;
 
-@property (nonatomic, strong) NSString *crashesDir;
+@property (nonatomic, copy) NSString *crashesDir;
 
 #if HOCKEYSDK_FEATURE_AUTHENTICATOR
 
 // Only set via BITAuthenticator
-@property (nonatomic, strong) NSString *installationIdentification;
+@property (nonatomic, copy) NSString *installationIdentification;
 
 // Only set via BITAuthenticator
 @property (nonatomic) BITAuthenticatorIdentificationType installationIdentificationType;
@@ -84,6 +84,8 @@
 @property (nonatomic) BOOL installationIdentified;
 
 #endif /* HOCKEYSDK_FEATURE_AUTHENTICATOR */
+
+- (instancetype)initWithAppIdentifier:(NSString *)appIdentifier appEnvironment:(BITEnvironment)environment hockeyAppClient:(BITHockeyAppClient *)hockeyAppClient NS_DESIGNATED_INITIALIZER;
 
 - (void)cleanCrashReports;
 
@@ -96,7 +98,7 @@
 - (NSString *)firstNotApprovedCrashReport;
 
 - (void)persistUserProvidedMetaData:(BITCrashMetaData *)userProvidedMetaData;
-- (void)persistAttachment:(BITHockeyAttachment *)attachment withFilename:(NSString *)filename;
+- (BOOL)persistAttachment:(BITHockeyAttachment *)attachment withFilename:(NSString *)filename;
 
 - (BITHockeyAttachment *)attachmentForCrashReport:(NSString *)filename;
 
