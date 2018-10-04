@@ -37,9 +37,9 @@
 
 
 /**
- * Custom block that handles the alert that prompts the user whether he wants to send crash reports
+ * Custom block that handles the alert that prompts the user whether they want to send crash reports
  */
-typedef void(^BITCustomAlertViewHandler)();
+typedef void(^BITCustomAlertViewHandler)(void);
 
 
 /**
@@ -246,6 +246,7 @@ typedef NS_ENUM(NSUInteger, BITCrashManagerReportMode) {
  *
  *  This allows it to get a crash report if the app got killed while being in the foreground
  *  because of one of the following reasons:
+ *
  *  - The main thread was blocked for too long
  *  - The app took too long to start up
  *  - The app tried to allocate too much memory. If iOS did send a memory warning before killing the app because of this reason, `didReceiveMemoryWarningInLastSession` returns `YES`.
@@ -254,6 +255,7 @@ typedef NS_ENUM(NSUInteger, BITCrashManagerReportMode) {
  *  - If `enableMachExceptionHandler` is not activated, crashed due to stack overflow will also be reported
  *
  *  The following kills can _NOT_ be detected:
+ *
  *  - Terminating the app takes too long
  *  - Permitted background duration too long for all other cases
  *  - App failed to resume in time for all other cases
@@ -378,7 +380,7 @@ typedef NS_ENUM(NSUInteger, BITCrashManagerReportMode) {
 
 /**
  Lets you set a custom block which handles showing a custom UI and asking the user
- whether he wants to send the crash report.
+ whether they want to send the crash report.
  
  This replaces the default alert the SDK would show!
  
@@ -388,7 +390,7 @@ typedef NS_ENUM(NSUInteger, BITCrashManagerReportMode) {
  In addition to this you should always ask your users if they agree to send crash reports, send them
  always or not and return the result when calling `handleUserInput:withUserProvidedCrashDescription`.
  
- @param alertViewHandler A block that is responsible for loading, presenting and and dismissing your custom user interface which prompts the user if he wants to send crash reports. The block is also responsible for triggering further processing of the crash reports.
+ @param alertViewHandler A block that is responsible for loading, presenting and and dismissing your custom user interface which prompts the user if they want to send crash reports. The block is also responsible for triggering further processing of the crash reports.
  
  @warning This is not available when compiled for Watch OS!
  
@@ -475,11 +477,5 @@ typedef NS_ENUM(NSUInteger, BITCrashManagerReportMode) {
  * If the SDK detects an App Store environment, it will _NOT_ cause the app to crash!
  */
 - (void)generateTestCrash;
-
-///-----------------------------------------------------------------------------
-/// @name Deprecated
-///-----------------------------------------------------------------------------
-
-@property (nonatomic, readonly) NSTimeInterval timeintervalCrashInLastSessionOccured DEPRECATED_MSG_ATTRIBUTE("Use the properly spelled property `timeIntervalCrashInLastSessionOccurred` instead.");
 
 @end

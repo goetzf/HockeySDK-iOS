@@ -26,6 +26,9 @@ profile
 **/.idea/
 **/.idea/**
 
-documentation/
+# Infer
+**/infer-out
+
+Generated/
 Products/
 *.xccheckout

@@ -19,10 +19,9 @@
 
 
 @interface BITCrashReportComposeViewController ()
-{
-  NSString *_userName;
-  NSString *_userEmail;
-}
+
+@property (nonatomic) NSString *userName;
+@property (nonatomic) NSString *userEmail;
 
 @property (nonatomic) IBOutlet UILabel *headerLabel;
 
@@ -102,8 +101,8 @@
 
 - (void)prepareWithUserName:(NSString *)userName userEmail:(NSString *)userEmail
 {
-  _userName = userName;
-  _userEmail = userEmail;
+  self.userName = userName;
+  self.userEmail = userEmail;
   
   if (self.isViewLoaded)
     [self setUpUserFields];
@@ -111,25 +110,25 @@
 
 - (void)setUpUserFields
 {
-  self.nameTextField.text = _userName;
-  self.emailTextField.text = _userEmail;
+  self.nameTextField.text = self.userName;
+  self.emailTextField.text = self.userEmail;
 }
 
 #pragma mark - Actions
 
-- (IBAction)sendReport:(id)sender {
+- (IBAction)sendReport:(__unused id)sender {
   // Create meta data
   BITCrashMetaData *metaData = [BITCrashMetaData new];
   metaData.userID = BITHockeyManager.sharedHockeyManager.userID;
   metaData.userName = self.nameTextField.text;
   metaData.userEmail = self.emailTextField.text;
-  metaData.userDescription = self.problemDescriptionTextView.text;
+  metaData.userProvidedDescription = self.problemDescriptionTextView.text;
   
   // Submit
   [self.delegate crashReportComposeViewController:self didComposeWithMetaData:metaData];
 }
 
-- (IBAction)dismissReport:(id)sender {
+- (IBAction)dismissReport:(__unused id)sender {
   [self.delegate crashReportComposeViewControllerDidCancel:self];
 }
 

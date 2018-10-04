@@ -45,7 +45,7 @@
     appVersionMetaInfo.version = [dict objectForKey:@"version"];
     appVersionMetaInfo.shortVersion = [dict objectForKey:@"shortversion"];
     appVersionMetaInfo.minOSVersion = [dict objectForKey:@"minimum_os_version"];
-    [appVersionMetaInfo setDateWithTimestamp:[[dict objectForKey:@"timestamp"] doubleValue]];
+    [appVersionMetaInfo setDateWithTimestamp:[(NSNumber *)[dict objectForKey:@"timestamp"] doubleValue]];
     appVersionMetaInfo.size = [dict objectForKey:@"appsize"];
     appVersionMetaInfo.notes = [dict objectForKey:@"notes"];
     appVersionMetaInfo.mandatory = [dict objectForKey:@"mandatory"];
@@ -62,7 +62,7 @@
 - (BOOL)isEqual:(id)other {
   if (other == self)
     return YES;
-  if (!other || ![other isKindOfClass:[self class]])
+  if (!other || ![(NSObject *)other isKindOfClass:[self class]])
     return NO;
   return [self isEqualToAppVersionMetaInfo:other];
 }
@@ -177,8 +177,8 @@
 }
 
 - (NSString *)sizeInMB {
-  if ([_size isKindOfClass: [NSNumber class]] && [_size doubleValue] > 0) {
-    double appSizeInMB = [_size doubleValue]/(1024*1024);
+  if ([self.size isKindOfClass: [NSNumber class]] && [self.size doubleValue] > 0) {
+    double appSizeInMB = [self.size doubleValue]/(1024*1024);
     NSString *appSizeString = [NSString stringWithFormat:@"%.1f MB", appSizeInMB];
     return appSizeString;
   }
@@ -187,7 +187,7 @@
 }
 
 - (void)setDateWithTimestamp:(NSTimeInterval)timestamp {
-  if (timestamp) {
+  if (timestamp != 0) {
     NSDate *appDate = [NSDate dateWithTimeIntervalSince1970:timestamp];
     self.date = appDate;
   } else {
@@ -216,7 +216,7 @@
   
   __block BOOL hasUUID = NO;
   
-  [self.uuids enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop){
+  [self.uuids enumerateKeysAndObjectsUsingBlock:^(id __unused key, id obj, BOOL *stop){
     if (obj && [uuid compare:obj] == NSOrderedSame) {
       hasUUID = YES;
       *stop = YES;

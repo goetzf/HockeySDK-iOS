@@ -82,11 +82,6 @@ typedef NS_ENUM(NSInteger, BITImageAnnotationViewControllerInteractionMode) {
     [self.editingControls setImage:bit_imageNamed(imageName, BITHOCKEYSDK_BUNDLE) forSegmentAtIndex:i++];
   }
   
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-  [self.editingControls setSegmentedControlStyle:UISegmentedControlStyleBar];
-#pragma clang diagnostic pop
-  
   self.navigationItem.titleView = self.editingControls;
   
   self.objects = [NSMutableArray new];
@@ -140,10 +135,10 @@ typedef NS_ENUM(NSInteger, BITImageAnnotationViewControllerInteractionMode) {
 }
 
 - (BOOL)prefersStatusBarHidden {
-  return self.navigationController.navigationBarHidden || self.navigationController.navigationBar.alpha == 0.0f;
+  return self.navigationController.navigationBarHidden || self.navigationController.navigationBar.alpha == 0;
 }
 
-- (void)orientationDidChange:(NSNotification *)notification {
+- (void)orientationDidChange:(NSNotification *) __unused notification {
   [self fitImageViewFrame];
 }
 
@@ -167,7 +162,7 @@ typedef NS_ENUM(NSInteger, BITImageAnnotationViewControllerInteractionMode) {
   self.imageView.frame = baseFrame;
 }
 
-- (void)editingAction:(id)sender {
+- (void)editingAction:(id) __unused sender {
   
 }
 
@@ -183,12 +178,12 @@ typedef NS_ENUM(NSInteger, BITImageAnnotationViewControllerInteractionMode) {
 
 #pragma mark - Actions
 
-- (void)discard:(id)sender {
+- (void)discard:(id) __unused sender {
   [self.delegate annotationControllerDidCancel:self];
   [self dismissViewControllerAnimated:YES completion:nil];
 }
 
-- (void)save:(id)sender {
+- (void)save:(id) __unused sender {
   UIImage *image = [self extractImage];
   [self.delegate annotationController:self didFinishWithImage:image];
   [self dismissViewControllerAnimated:YES completion:nil];
@@ -198,7 +193,7 @@ typedef NS_ENUM(NSInteger, BITImageAnnotationViewControllerInteractionMode) {
   UIGraphicsBeginImageContextWithOptions(self.image.size, YES, 0.0);
   CGContextRef ctx = UIGraphicsGetCurrentContext();
   [self.image drawInRect:CGRectMake(0, 0, self.image.size.width, self.image.size.height)];
-  CGContextScaleCTM(ctx,1.0/self.scaleFactor,1.0f/self.scaleFactor);
+  CGContextScaleCTM(ctx,((CGFloat)1.0)/self.scaleFactor,((CGFloat)1.0)/self.scaleFactor);
   
   // Drawing all the annotations onto the final image.
   for (BITImageAnnotation *annotation in self.objects){
@@ -348,58 +343,13 @@ typedef NS_ENUM(NSInteger, BITImageAnnotationViewControllerInteractionMode) {
   }
 }
 
-- (void)tapped:(UIGestureRecognizer *)tapRecognizer {
-  // This toggles the nav and status bar. Since iOS7 and pre-iOS7 behave weirdly different,
-  // this might look rather hacky, but hiding the navbar under iOS6 leads to some ugly
-  // animation effect which is avoided by simply hiding the navbar setting it's alpha to 0. // moritzh
-  
-  if (self.navigationController.navigationBar.alpha == 0 || self.navigationController.navigationBarHidden ){
-    
-    [UIView animateWithDuration:0.35f animations:^{
-      
-      if (NSFoundationVersionNumber > NSFoundationVersionNumber_iOS_6_1) {
-        [self.navigationController setNavigationBarHidden:NO animated:NO];
-      } else {
-        self.navigationController.navigationBar.alpha = 1.0;
-      }
-      
-      if ([self respondsToSelector:@selector(prefersStatusBarHidden)]) {
-        [self setNeedsStatusBarAppearanceUpdate];
-      } else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        [[UIApplication sharedApplication] setStatusBarHidden:NO];
-#pragma clang diagnostic pop
-      }
-      
-    } completion:^(BOOL finished) {
-      [self fitImageViewFrame];
-      
-    }];
-  } else {
-    [UIView animateWithDuration:0.35f animations:^{
-      
-      if (NSFoundationVersionNumber > NSFoundationVersionNumber_iOS_6_1) {
-        [self.navigationController setNavigationBarHidden:YES animated:NO];
-      } else {
-        self.navigationController.navigationBar.alpha = 0.0;
-      }
-      
-      if ([self respondsToSelector:@selector(prefersStatusBarHidden)]) {
-        [self setNeedsStatusBarAppearanceUpdate];
-      } else {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        [[UIApplication sharedApplication] setStatusBarHidden:YES];
-#pragma clang diagnostic pop
-      }
-      
-    } completion:^(BOOL finished) {
-      [self fitImageViewFrame];
-      
-    }];
-  }
-  
+- (void)tapped:(UIGestureRecognizer *) __unused tapRecognizer {
+  [UIView animateWithDuration:0.35 animations:^{
+    [self.navigationController setNavigationBarHidden:!self.prefersStatusBarHidden animated:NO];
+    [self setNeedsStatusBarAppearanceUpdate];
+  } completion:^(BOOL __unused finished) {
+    [self fitImageViewFrame];
+  }];
 }
 
 #pragma mark - Helpers
